@@ -280,13 +280,3 @@ iso-parser/
 
 See **POSTMAN_TEST.md** for Postman setup and sample HEX payload.
 
----
-
-## Real-World Context
-
-This project simulates bank switch systems where:
-
-1. **ATM/POS** sends ISO8583 messages to a payment switch.
-2. **Switch (Postilion, etc.)** forwards messages with card limit updates.
-3. **This service** parses the message and updates card limits in the database.
-4. **Database** stores the formatted limit string for downstream systems.
