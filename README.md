@@ -1,6 +1,12 @@
 # ISO8583 Limit Parser Service
 
-Spring Boot API that parses ISO8583 HEX messages, extracts XML from Field 127.022, parses card limits, applies master table rules, and persists to PostgreSQL.
+[![Java 17](https://img.shields.io/badge/Java-17+-orange.svg)](https://openjdk.org/)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.0.3-brightgreen.svg)](https://spring.io/projects/spring-boot)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-18-blue.svg)](https://www.postgresql.org/)
+
+Spring Boot API that parses ISO8583 HEX messages, extracts XML from Field 127.022 (Postilion), parses card limits, applies master table rules, and persists to PostgreSQL.
+
+**Repository:** [https://github.com/RUGU2211/iso-parser](https://github.com/RUGU2211/iso-parser)
 
 ---
 
@@ -161,11 +167,15 @@ This service simulates a **bank card limit update system** used in ATM switches,
 - PostgreSQL (create database `isodb`)
 - Maven
 
-### Run
+### Clone & Run
 
 ```bash
+git clone https://github.com/RUGU2211/iso-parser.git
+cd iso-parser
 mvn spring-boot:run
 ```
+
+The API runs at **http://localhost:8081**
 
 ### API
 
