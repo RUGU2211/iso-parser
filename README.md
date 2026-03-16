@@ -220,6 +220,8 @@ The API runs at **http://localhost:8081**
 
 ### Limit Master Seed Data (limit_name, limit_pnr, limit_rule_nr only)
 
+**If your database still has `prefix_value` column:** Run `drop_prefix_value_column.sql` in your PostgreSQL client to remove it.
+
 | limit_name | limit_pnr | limit_rule_nr |
 |------------|-----------|---------------|
 | goods_limit | 42 | 52 (POS) |

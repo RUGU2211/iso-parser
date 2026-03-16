@@ -26,6 +26,13 @@ public class XmlLimitParser {
         }
 
         String toParse = xml.trim();
+        // Strip any leading length/prefix (e.g. "295", "3295", "Postilion:InquiryOrUpdateData3295")
+        int firstLt = toParse.indexOf('<');
+        if (firstLt > 0) {
+            toParse = toParse.substring(firstLt);
+        } else if (firstLt < 0) {
+            throw new XmlParseException("No XML content found (expected '<' in field 127.022; got: " + (toParse.length() > 50 ? toParse.substring(0, 50) + "..." : toParse) + ")");
+        }
         int start = toParse.indexOf("<InquiryOrUpdateData");
         if (start >= 0) {
             int end = toParse.indexOf("</InquiryOrUpdateData>");
