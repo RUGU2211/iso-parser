@@ -5,13 +5,18 @@ iso:
   default-nr: 13
   default-seq-nr: "001"
   last-upd-user: sp
+  de39-success: "00"
+  de39-failed: "01"
 
 limit:
   max-21: "999999999999999999999999"
   max-12: "999999999999"
-  prefix-1: "124229212522810"
+  prefix-1: "1242292125228510"
   prefix-2: "1241292125328510"
+  prefix-3: "1242292125228510"
   default-value: "0"
+  default-profile-nr: 42
+  default-rule-nr: 52
 
 spring:
   application:

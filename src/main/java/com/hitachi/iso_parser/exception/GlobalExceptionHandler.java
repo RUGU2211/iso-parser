@@ -10,16 +10,24 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import com.hitachi.iso_parser.config.IsoConfig;
 import com.hitachi.iso_parser.dto.IsoParseResponse;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    private IsoConfig isoConfig;
+
+    public GlobalExceptionHandler(IsoConfig isoConfig) {
+        this.isoConfig = isoConfig;
+    }
 
     @ExceptionHandler(IsoParseException.class)
     public ResponseEntity<IsoParseResponse> handleIsoParse(IsoParseException e) {
         IsoParseResponse response = new IsoParseResponse();
         response.setSuccess(false);
         response.setMessage("ISO parse failed: " + e.getMessage());
+        response.setDe39(isoConfig.getDe39Failed());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 
@@ -28,6 +36,7 @@ public class GlobalExceptionHandler {
         IsoParseResponse response = new IsoParseResponse();
         response.setSuccess(false);
         response.setMessage("Invalid request body. Send raw ISO HEX as text/plain.");
+        response.setDe39(isoConfig.getDe39Failed());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 
@@ -36,6 +45,7 @@ public class GlobalExceptionHandler {
         IsoParseResponse response = new IsoParseResponse();
         response.setSuccess(false);
         response.setMessage("XML parse failed: " + e.getMessage());
+        response.setDe39(isoConfig.getDe39Failed());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 
@@ -50,6 +60,7 @@ public class GlobalExceptionHandler {
         IsoParseResponse response = new IsoParseResponse();
         response.setSuccess(false);
         response.setMessage("Validation failed: " + msg);
+        response.setDe39(isoConfig.getDe39Failed());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 
@@ -58,6 +69,7 @@ public class GlobalExceptionHandler {
         IsoParseResponse response = new IsoParseResponse();
         response.setSuccess(false);
         response.setMessage("Processing failed: " + e.getMessage());
+        response.setDe39(isoConfig.getDe39Failed());
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
     }
 }

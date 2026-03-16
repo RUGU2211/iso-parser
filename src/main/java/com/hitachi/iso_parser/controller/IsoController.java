@@ -7,10 +7,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.hitachi.iso_parser.config.IsoConfig;
 import com.hitachi.iso_parser.dto.IsoParseRequest;
 import com.hitachi.iso_parser.dto.IsoParseResponse;
-import com.hitachi.iso_parser.exception.IsoParseException;
-import com.hitachi.iso_parser.exception.XmlParseException;
 import com.hitachi.iso_parser.service.IsoMessageService;
 
 @RestController
@@ -18,9 +17,11 @@ import com.hitachi.iso_parser.service.IsoMessageService;
 public class IsoController {
 
     private IsoMessageService isoMessageService;
+    private IsoConfig isoConfig;
 
-    public IsoController(IsoMessageService isoMessageService) {
+    public IsoController(IsoMessageService isoMessageService, IsoConfig isoConfig) {
         this.isoMessageService = isoMessageService;
+        this.isoConfig = isoConfig;
     }
 
     @PostMapping(value = "/parse", consumes = MediaType.TEXT_PLAIN_VALUE)
@@ -39,27 +40,10 @@ public class IsoController {
     }
 
     private ResponseEntity<IsoParseResponse> processAndRespond(String message) {
-        try {
-            isoMessageService.processIsoMessage(message);
-            IsoParseResponse response = new IsoParseResponse();
-            response.setSuccess(true);
-            response.setMessage("ISO message processed successfully");
+        IsoParseResponse response = isoMessageService.processIsoMessage(message);
+        if (response.isSuccess()) {
             return ResponseEntity.ok(response);
-        } catch (IsoParseException e) {
-            IsoParseResponse response = new IsoParseResponse();
-            response.setSuccess(false);
-            response.setMessage("ISO parse failed: " + e.getMessage());
-            return ResponseEntity.badRequest().body(response);
-        } catch (XmlParseException e) {
-            IsoParseResponse response = new IsoParseResponse();
-            response.setSuccess(false);
-            response.setMessage("XML parse failed: " + e.getMessage());
-            return ResponseEntity.badRequest().body(response);
-        } catch (Exception e) {
-            IsoParseResponse response = new IsoParseResponse();
-            response.setSuccess(false);
-            response.setMessage("Error: " + e.getMessage());
-            return ResponseEntity.status(500).body(response);
         }
+        return ResponseEntity.status(response.getDe39() != null && isoConfig.getDe39Failed().equals(response.getDe39()) ? 400 : 500).body(response);
     }
 }

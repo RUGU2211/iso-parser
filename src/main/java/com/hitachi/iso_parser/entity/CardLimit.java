@@ -10,11 +10,9 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
-import lombok.Data;
 
 @Entity
 @Table(name = "card_limits", uniqueConstraints = @UniqueConstraint(columnNames = {"pan", "seq_nr"}))
-@Data
 public class CardLimit {
 
 	@Id
