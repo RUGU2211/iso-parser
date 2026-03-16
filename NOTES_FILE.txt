@@ -1,0 +1,281 @@
+[Mar 13 11h27:49.958] - <0600> Message from UTKSBANK [172.16.15.59,37504] 
+0600:
+   [LLVAR  n    ..19 016] 002 [353821 0000000026] 
+   [Fixed  n       6 006] 003 [910000] 
+   [Fixed  n      10 010] 007 [0313112749] 
+   [Fixed  n       6 006] 011 [252035] 
+   [Fixed  n       6 006] 012 [112749] 
+   [Fixed  n       4 004] 013 [0313] 
+   [Fixed  n       4 004] 014 [3005] 
+   [Fixed  n       4 004] 018 [1111] 
+   [Fixed  n       3 003] 022 [000] 
+   [None   n         003] 023 [001] 
+   [Fixed  n       2 002] 025 [16] 
+   [Fixed  ans     8 008] 041 [01234567] 
+   [Fixed  ans    15 015] 042 [123456789012345] 
+   [Fixed  ans    40 040] 043 [abcdefghijklmnopqrstuvwxyz01234567890123] 
+   [LLVAR  an   ..11 005] 100 [10011] 
+   [LLLVAR an     15 015] 123 [153220372737300] 
+   [LLVAR  ans  ..32 014] 127.002 [20260313112749] 
+   [LLLLLVAans 99999 331] 127.022.Postilion:InquiryOrUpdateData
+                                   [<InquiryOrUpdateData>
+                                    <Card>
+                                     <PAN>3538210000000026</PAN>
+                                     <ExpiryDate>3005</ExpiryDate>
+                                     <SeqNr>001</SeqNr>
+                                     <Field Name="cash_limit">20000</Field>
+                                     <Field Name="goods_limit">80000</Field>
+                                     <Field Name="card_not_present_limit">90000</Field>
+                                    </Card>
+                                   </InquiryOrUpdateData>]
+   [Fixed  n       4 004] 127.033 [5026] 
+
+
+
+
+binary data 
+0000(0000)  30 36 30 30 e2 3c 46 80  00 e0 00 00 00 00 00 00   0600.<F.........
+0016(0010)  10 00 00 22 31 36 33 35  33 38 32 31 30 30 30 30   ..."163538210000
+0032(0020)  30 30 30 30 32 36 39 31  30 30 30 30 30 33 31 33   0000269100000313
+0048(0030)  31 31 32 37 34 39 32 35  32 30 33 35 31 31 32 37   1127492520351127
+0064(0040)  34 39 30 33 31 33 33 30  30 35 31 31 31 31 30 30   4903133005111100
+0080(0050)  30 30 30 31 31 36 30 31  32 33 34 35 36 37 31 32   0001160123456712
+0096(0060)  33 34 35 36 37 38 39 30  31 32 33 34 35 61 62 63   3456789012345abc
+0112(0070)  64 65 66 67 68 69 6a 6b  6c 6d 6e 6f 70 71 72 73   defghijklmnopqrs
+0128(0080)  74 75 76 77 78 79 7a 30  31 32 33 34 35 36 37 38   tuvwxyz012345678
+0144(0090)  39 30 31 32 33 30 35 31  30 30 31 31 30 31 35 31   9012305100110151
+0160(00a0)  35 33 32 32 30 33 37 32  37 33 37 33 30 30 30 30   5322037273730000
+0176(00b0)  30 33 36 34 40 00 04 00  80 00 00 00 31 34 32 30   0364@.......1420
+0192(00c0)  32 36 30 33 31 33 31 31  32 37 34 39 30 30 33 33   2603131127490033
+0208(00d0)  31 32 32 39 50 6f 73 74  69 6c 69 6f 6e 3a 49 6e   1229Postilion:In
+0224(00e0)  71 75 69 72 79 4f 72 55  70 64 61 74 65 44 61 74   quiryOrUpdateDat
+0240(00f0)  61 33 32 39 35 3c 3f 78  6d 6c 20 76 65 72 73 69   a3295<?xml versi
+0256(0100)  6f 6e 3d 22 31 2e 30 22  20 65 6e 63 6f 64 69 6e   on="1.0" encodin
+0272(0110)  67 3d 22 55 54 46 2d 38  22 3f 3e 3c 49 6e 71 75   g="UTF-8"?><Inqu
+0288(0120)  69 72 79 4f 72 55 70 64  61 74 65 44 61 74 61 3e   iryOrUpdateData>
+0304(0130)  3c 43 61 72 64 3e 3c 50  41 4e 3e 33 35 33 38 32   <Card><PAN>35382
+0320(0140)  31 30 30 30 30 30 30 30  30 32 36 3c 2f 50 41 4e   10000000026</PAN
+0336(0150)  3e 3c 45 78 70 69 72 79  44 61 74 65 3e 33 30 30   ><ExpiryDate>300
+0352(0160)  35 3c 2f 45 78 70 69 72  79 44 61 74 65 3e 3c 53   5</ExpiryDate><S
+0368(0170)  65 71 4e 72 3e 30 30 31  3c 2f 53 65 71 4e 72 3e   eqNr>001</SeqNr>
+0384(0180)  3c 46 69 65 6c 64 20 4e  61 6d 65 3d 22 63 61 73   <Field Name="cas
+0400(0190)  68 5f 6c 69 6d 69 74 22  3e 32 30 30 30 30 3c 2f   h_limit">20000</
+0416(01a0)  46 69 65 6c 64 3e 3c 46  69 65 6c 64 20 4e 61 6d   Field><Field Nam
+0432(01b0)  65 3d 22 67 6f 6f 64 73  5f 6c 69 6d 69 74 22 3e   e="goods_limit">
+0448(01c0)  38 30 30 30 30 3c 2f 46  69 65 6c 64 3e 3c 46 69   80000</Field><Fi
+0464(01d0)  65 6c 64 20 4e 61 6d 65  3d 22 63 61 72 64 5f 6e   eld Name="card_n
+0480(01e0)  6f 74 5f 70 72 65 73 65  6e 74 5f 6c 69 6d 69 74   ot_present_limit
+0496(01f0)  22 3e 39 30 30 30 30 3c  2f 46 69 65 6c 64 3e 3c   ">90000</Field><
+0512(0200)  2f 43 61 72 64 3e 3c 2f  49 6e 71 75 69 72 79 4f   /Card></InquiryO
+0528(0210)  72 55 70 64 61 74 65 44  61 74 61 3e 35 30 32 36   rUpdateData>5026
+
+
+
+
+
+
+
+##################################################################################################################
+
+
+
+
+
+
+Hello Rugved,
+Kindly refer following parsing for string.
+[1242 3100 12522 93101999999999999 999999999999 | 2000000 999999999999999999999999 | 3000000 999999999999]
+12 42 2 92 125228510|999999999999|999999999999|10000000|999999999999|999999999999|10000000|999999999999
+124129212 5328510 999999999999999999999999 | 15000000 999999999999999999999999 150000 999999999999
+1 Length
+2 Length of length
+42 limit_profile_nr (In table--> pc_limits_profiles) (42 is for POS_Transaction_Limit and 41 is for Ecom_Transaction_Limits)
+3 length of length
+100 length data (Next data length after 100 --> 125229310|999999999999999999999999 | 2000000 999999999999999999999999 3000000 999999999999)
+1 length
+2 length of length
+52 limit rule nr (In table -> pc_limits_profile_rules) (52 Pos_Transaction_limit and 53 Ecom_Transaction_Limit)
+2 length of length
+93 length data (Next data length after 93 -> 101999999999999999999999999|2000000|999999999999 999999999999|3000000|999999999999)
+10 999999999999 999999999999 | 2000000 999999999999999999999999 | 3000000 | 999999999999
+2000000 --> Set Advance POS Limit 
+3000000 --> Set Advance ECOM Limit
+
+
+
+
+
+
+
+
+
+######################################################################################################################
+prompt for ai 
+######################################################################################################################
+i have a make a java spring boot project and that will work like a convertion means make a api that will take a req ie in iso format hex dec as share above and parse the xml field from that and same to the table in the db and parse field cash_limit, goods_limit, card_not_present_limit, SeqNr, ExpiryDate, PAN and update that table by inserting a value if the value or that field is not present then take a default value for that field and the db column  should be - isonr default take 13 , pan  ,seqnr default take 001,limits (here the limit need to be calculated by the master table rules and there are some validation and also a proper position where to place that data and need to convert that parse limit to string by the validation and rules and for this )take a data from master table ,last_up_date here getdate(),last_upd_user default take sp, date_date default null.. 
+and in the master table - 
+limit - goods_limit, card_not_present_limit, cash_limit
+limit_pnr - 42,43,44
+limit_rule_nr - 52,53,54
+take this for the parse limit from message(xml) and then save to db by convertion to string by the rules - 
+
+Kindly refer following parsing for string.
+[1242 3100 12522 93101999999999999 999999999999 | 2000000 999999999999999999999999 | 3000000 999999999999]
+
+1242292125228510 999999999999999999999999 | 10000000|999999999999999999999999 | 10000000 999999999999124129212 5328510 999999999999999999999999 | 15000000 999999999999999999999999 150000 999999999999
+
+1 Length
+2 Length of length
+42 limit_profile_nr (In table--> pc_limits_profiles) (42 is for POS_Transaction_Limit and 41 is for Ecom_Transaction_Limits)
+3 length of length
+100 length data (Next data length after 100 --> 125229310|999999999999999999999999 | 2000000 999999999999999999999999 3000000 999999999999)
+1 length
+2 length of length
+52 limit rule nr (In table -> pc_limits_profile_rules) (52 Pos_Transaction_limit and 53 Ecom_Transaction_Limit)
+2 length of length
+93 length data (Next data length after 93 -> 101|999999999999|999999999999|2000000|999999999999 999999999999|3000000|999999999999)
+10 999999999999 999999999999 | 2000000 999999999999|999999999999 | 3000000 | 999999999999
+2000000 --> Set Advance POS
+3000000 --> Set Advance ECom limit 
+
+
+
+
+
+###########################################################################################
+testing - 
+1 2 42 2 86 125228510|999999999999|999999999999|80000|999999999999|999999999999|80000|999999999999
+1 2 41 2 86 125328510|999999999999|999999999999|90000|999999999999|999999999999|90000|999999999999
+1 2 42 2 86 125228510|999999999999|999999999999|20000|999999999999|999999999999|20000|999999999999
+
+
+format for the limit to be calulated this is done dynamic the prefix 1,2,3 is been calculated dynamic =
+a1 = prefix 1|f|f|pos|f|f|pos|f      example - 1242292125228510|999999999999|999999999999|10000000|999999999999|999999999999|10000000|999999999999
+a2 = prefix 2|f|f|ecom|f|f|ecom|f	example - 1241292125328510|999999999999|999999999999|15000000|999999999999|999999999999|150000|999999999999
+a3 = prefix 3|f|f|cash|f|f|cash|f	example - 1242292125228510|999999999999|999999999999|11000000|999999999999|999999999999|11000000|999999999999
+limit in the table = a1+a2+a3  i.e = prefix 1|f|f|pos|f|f|pos|f|prefix 2|f|f|ecom|f|f|ecom|f|prefix 3|f|f|cash|f|f|cash|f
+
+f - 999999999999
+pos - extract from message
+ecom - extract from message 
+cash extract from message
+
+prefix 1,2,3 - is calculated by this and this is done for all 3 part prefix 1,2,3 -
+example - 
+1 Length
+2 Length of length
+42 limit_profile_nr (In table--> pc_limits_profiles) (42 is for POS_Transaction_Limit and 41 is for Ecom_Transaction_Limits)
+3 length of length
+100 length data (Next data length after 100 --> 125229310|999999999999999999999999 | 2000000 999999999999999999999999 3000000 999999999999)
+1 length
+2 length of length
+52 limit rule nr (In table -> pc_limits_profile_rules) (52 Pos_Transaction_limit and 53 Ecom_Transaction_Limit)
+2 length of length
+93 length data (Next data length after 93 -> 101|999999999999|999999999999|2000000|999999999999 999999999999|3000000|999999999999)
+10 999999999999 999999999999 | 2000000 999999999999|999999999999 | 3000000 | 999999999999
+
+
+
+
+
+
+
+##########################################################################################################################################
+LOGIC 
+##########################################################################################################################################
+a1 = 1 2 42 2 92 125228510|999999999999|999999999999|80000|999999999999|999999999999|80000|999999999999
+a2= 1 2 41 2 92 125328510|999999999999|999999999999|90000|999999999999|999999999999|90000|999999999999
+a3= 1 2 42 2 92 125228510|999999999999|999999999999|20000|999999999999|999999999999|20000|999999999999
+
+now understand the logic proper for all a1 a2 a3
+take index 1 ie 1 then seprate the next digit by 1 ie 2
+then next  index is 2 and digit is 2 then seprte index 3,4
+then next index 5 digit 2 then again seprate next 2 digit/index ie 9,2 and index is  6,7
+then next is index 8 digit 1 seprate next index 9 digit 2
+then next index is 10 digit 2 seprate 2 next index ie 11,12 digit 52 
+like vise for all 
+
+THE MAIN PART IS UNDERSTAND FROM HERE THAT - a1(10000000)
+a1 = 1 2 42 2 92 1 2 52 2 85 10|999999999999|999999999999|10000000|999999999999|999999999999|10000000|999999999999
+
+IF WE CALCULATE THE NEXT ALL INDEX FROM THE SPLIT 92 THEN THE INDEX SHOULD BE SAME 92 DIGIT 
+THE REMAINING DIGIT IS - 125228510|999999999999|999999999999|10000000|999999999999|999999999999|10000000|999999999999
+AFTER THIS - 12 42 2 92|(THE NEXT ALL DIGIT SHOULD BE 92)
+SO THE 92, 42 AND ALL THIS VALUE SHOULD BE CALCULATED BY THE DIGIT REMAINING DIGIT IF FOR EXAMPLE THE REMAINING DIGIT IS 46 THEN THE 92 VALUE WILL BE 46 
+
+
+
+
+
+
+
+
+
+
+##########################################################
+CALCULATION FOR SAMPLE -
+##########################################################
+
+Example: a1 with value = 10000000
+Limit values (81 chars):
+
+999999999999|999999999999|10000000|999999999999|999999999999|10000000|999999999999
+
+Structure:
+
+1 2 42 2 92    1 2 52 2 81    999999999999|999999999999|10000000|999999999999|999999999999|10000000|999999999999
+└─outer───┘ └─inner────┘ └────────────────────────── limit_values (81 chars) ──────────────────┘
+
+Breakdown:
+
+Part	Value	Meaning
+1	1	Length indicator
+2	2	Length of length (next 2 digits)
+42	42	Profile nr (from limit_master)
+2	2	Length of length
+92	92	Length of inner data (8 + 81 = 89; your example uses 92)
+1	1	Inner length indicator
+2	2	Inner length of length
+52	52	Rule nr (from limit_master)
+2	2	Inner length of length
+81	81	Length of limit values (81 chars)
+
+
+16-digit prefix (no spaces):
+
+1242292125228810
+1 2 42 2 92 → 1242292 (7 digits)
+1 2 52 2 81 → 1252281 (7 digits)
+0 → padding to 16 digits (if required)
+
+Full a1 example:
+1 2 42 292125228810|999999999999|999999999999|10000000|999999999999|999999999999|10000000|999999999999
+
+
+
+
+
+
+Example: a1 with value = 80000 (76 chars)
+
+Limit values:
+999999999999|999999999999|80000|999999999999|999999999999|80000|999999999999   -> 76 char 
+
+16-digit prefix:
+1242286122522760
+
+Outer: 1 2 42 2 84 → inner data length 84 (8 + 76)
+
+Inner: 1 2 52 2 76 → limit values length 76
+
+Full a1:
+1 2 42 2 84 1 2 52 2 76|999999999999|999999999999|80000|999999999999|999999999999|80000|999999999999
+
+
+
+
+
+
+
+
+
