@@ -1,11 +1,9 @@
 package com.hitachi.iso_parser.entity;
 
 import jakarta.persistence.*;
-import lombok.Data;
 
 @Entity
 @Table(name = "limit_master")
-@Data
 public class LimitMaster {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)

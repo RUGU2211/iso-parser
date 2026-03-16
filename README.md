@@ -1,12 +1,11 @@
 # ISO8583 Limit Parser Service
 
+[![GitHub](https://img.shields.io/badge/GitHub-iso--parser-blue.svg)](https://github.com/RUGU2211/iso-parser)
 [![Java 17](https://img.shields.io/badge/Java-17+-orange.svg)](https://openjdk.org/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.0.3-brightgreen.svg)](https://spring.io/projects/spring-boot)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-18-blue.svg)](https://www.postgresql.org/)
 
 Spring Boot API that parses ISO8583 HEX messages, extracts XML from Field 127.022 (Postilion), parses card limits, applies master table rules, and persists to PostgreSQL.
-
-**Repository:** [https://github.com/RUGU2211/iso-parser](https://github.com/RUGU2211/iso-parser)
 
 ---
 
@@ -82,12 +81,9 @@ This service simulates a **bank card limit update system** used in ATM switches,
 
 #### Step 4: Limit String Calculation (LimitCalculationService)
 
-1. **Load rules:** Reads `limit_master` table (goods_limit, card_not_present_limit, cash_limit).
-2. **Build format:** If `limit_master` has data, builds:
-   ```
-   prefix1 + 21nines | pos_limit | 21nines | cash_limit 12nines + prefix2 + 21nines | ecom_limit + 21nines + cash_limit + 12nines
-   ```
-3. **Fallback:** If `limit_master` is empty, uses simple `cash|goods|ecom` format.
+1. **Load rules:** Reads `limit_master` table (limit_pnr, limit_rule_nr per limit type).
+2. **Dynamic format:** Builds a1|a2|a3 where each part = `1 2 {profile_nr} 2 {data_len} [inner_data]`, inner = `1 2 {rule_nr} 2 {limit_values_len} [limit_values]`, limit_values = `f|f|val|f|f|val|f`.
+3. **Lengths:** All lengths calculated dynamically from actual data (no hardcoding).
 4. **Output:** Formatted limit string.
 
 #### Step 5: Database Persistence (IsoMessageService)
@@ -96,6 +92,7 @@ This service simulates a **bank card limit update system** used in ATM switches,
 2. **Update or insert:** If found → update; if not → create new.
 3. **Save:** Sets iso_nr, pan, seq_nr, limits, last_upd_date, last_upd_user.
 4. **Persist:** `cardLimitRepository.save(entity)`.
+5. **Audit:** Every request/response stored in `iso_audit` (req_in, binary_hex, iso_fields_formatted, de11, pan, expiry_date, seq_nr, cash_limit, goods_limit, card_not_present_limit, resp_out, de39).
 
 ### 4. Input Message Structure
 
@@ -123,39 +120,39 @@ This service simulates a **bank card limit update system** used in ATM switches,
 | goods_limit | POS purchase limit |
 | card_not_present_limit | E-commerce limit |
 
-### 5. Limit String Format
+### 5. Limit String Format (Dynamic TLV)
 
-**Example output for PAN=3538210000000026, cash=20000, goods=80000, ecom=90000:**
+**Format:** a1 + a2 + a3, where each part = `1 2 {profile_nr} 2 {data_len} [inner_data]`
 
-```
-124229212522810999999999999999999999999|80000|999999999999999999999999|20000 9999999999991241292125328510999999999999999999999999|90000999999999999999999999200009999999999999
-```
+**Example a1 (pos=80000):** `1 2 42 2 84 12252276|999999999999|999999999999|80000|999999999999|999999999999|80000|999999999999`
 
-- **Format:** `prefix1 + 21nines | pos | 21nines | cash 12nines + prefix2 + 21nines | ecom + 21nines + cash + 12nines`
-- **pos** = goods_limit (POS)
-- **ecom** = card_not_present_limit (ECOM)
-- **cash** = cash_limit (ATM)
+- **profile_nr, rule_nr** from `limit_master` (42/52=POS, 41/53=ECOM, 42/54=CASH)
+- **data_len, limit_values_len** calculated dynamically
+- **pos** = goods_limit, **ecom** = card_not_present_limit, **cash** = cash_limit
 
 ### 6. Component Responsibilities
 
 | Component | Responsibility |
 |-----------|----------------|
-| **IsoController** | Accepts request, validates content type, calls service, returns success/error response |
-| **IsoMessageService** | Orchestrates parsing and persistence |
-| **Iso8583MessageParser** | Extracts XML from ISO8583 Field 127/127.022 |
+| **IsoController** | Accepts request, returns response with de39 |
+| **IsoMessageService** | Orchestrates parsing, persistence, audit |
+| **Iso8583MessageParser** | Extracts XML + DE11 from ISO8583 Field 127/127.022 |
 | **XmlLimitParser** | Parses XML into CardLimitDTO |
-| **LimitCalculationService** | Builds limit string from DTO using limit_master |
+| **LimitCalculationService** | Builds dynamic limit string (a1\|a2\|a3) from limit_master |
 | **CardLimitRepository** | JPA: findByPanAndSeqNr, save |
-| **LimitMasterRepository** | JPA: loads limit rules |
-| **GlobalExceptionHandler** | Handles IsoParseException, XmlParseException, etc. |
+| **IsoAuditRepository** | JPA: saves every request/response to iso_audit |
+| **LimitMasterRepository** | JPA: loads limit rules (profile_nr, rule_nr) |
+| **GlobalExceptionHandler** | Handles exceptions, returns de39=01 |
 
-### 7. Error Handling
+### 7. Error Handling & Response
 
-| Exception | HTTP Status | Response |
-|-----------|--------------|----------|
-| IsoParseException | 400 | `{"success": false, "message": "ISO parse failed: ..."}` |
-| XmlParseException | 400 | `{"success": false, "message": "XML parse failed: ..."}` |
-| Other Exception | 500 | `{"success": false, "message": "Error: ..."}` |
+| Result | HTTP | de39 |
+|--------|------|------|
+| Success | 200 | 00 |
+| Parse/validation error | 400 | 01 |
+| Server error | 500 | 01 |
+
+All responses include `de39` (00=success, 01=failed).
 
 ---
 
@@ -197,7 +194,8 @@ The API runs at **http://localhost:8081**
 ```json
 {
   "success": true,
-  "message": "ISO message processed successfully"
+  "message": "ISO message processed successfully",
+  "de39": "00"
 }
 ```
 
@@ -205,7 +203,8 @@ The API runs at **http://localhost:8081**
 ```json
 {
   "success": false,
-  "message": "ISO parse failed: Invalid HEX format"
+  "message": "ISO parse failed: Invalid HEX format",
+  "de39": "01"
 }
 ```
 
@@ -216,15 +215,16 @@ The API runs at **http://localhost:8081**
 ### Tables
 
 - **card_limits:** Parsed card limit data (pan, seq_nr, limits, last_upd_date, etc.)
-- **limit_master:** Rule mapping for limit conversion
+- **limit_master:** Rule mapping (limit_pnr=profile_nr, limit_rule_nr=rule_nr)
+- **iso_audit:** Every request/response (req_in, binary_hex, iso_fields_formatted, de11, pan, expiry_date, seq_nr, cash_limit, goods_limit, card_not_present_limit, resp_out, de39)
 
-### Limit Master Seed Data
+### Limit Master Seed Data (limit_name, limit_pnr, limit_rule_nr only)
 
 | limit_name | limit_pnr | limit_rule_nr |
 |------------|-----------|---------------|
 | goods_limit | 42 | 52 (POS) |
-| card_not_present_limit | 43 | 53 (ECOM) |
-| cash_limit | 44 | 54 (CASH) |
+| card_not_present_limit | 41 | 53 (ECOM) |
+| cash_limit | 42 | 54 (CASH) |
 
 ### Unique Key & Upsert (Card Processing Standard)
 
@@ -241,20 +241,19 @@ In card processing systems (Postilion / ISO8583), **PAN + SeqNr** is the unique 
 - **application.yml:** Port 8081, PostgreSQL, Hibernate ddl-auto, data.sql for limit_master seed
 - **data.sql:** Seeds limit_master on startup
 
-### Configurable Properties (no hardcoded data)
-
-All runtime values are configurable via `application.yml`:
+### Configurable Properties (all from application.yml)
 
 | Property | Description | Default |
 |----------|-------------|---------|
 | `iso.default-nr` | Default ISO number | 13 |
 | `iso.default-seq-nr` | Default sequence when missing | 001 |
 | `iso.last-upd-user` | Last update user | sp |
-| `limit.max-21` | Max value (21 nines) for limit format | 999999999999999999999999 |
-| `limit.max-12` | Max value (12 nines) | 999999999999 |
-| `limit.prefix-1` | Limit string prefix 1 | 124229212522810 |
-| `limit.prefix-2` | Limit string prefix 2 | 1241292125328510 |
+| `iso.de39-success` | Response code success | 00 |
+| `iso.de39-failed` | Response code failed | 01 |
+| `limit.max-12` | Filler value (12 nines) | 999999999999 |
 | `limit.default-value` | Default when limit missing | 0 |
+| `limit.default-profile-nr` | Fallback profile_nr | 42 |
+| `limit.default-rule-nr` | Fallback rule_nr | 52 |
 
 ---
 
@@ -267,16 +266,16 @@ iso-parser/
 ├── service/        IsoMessageService, LimitCalculationService
 ├── parser/         Iso8583MessageParser, XmlLimitParser
 ├── parser/xml/     InquiryOrUpdateData, Card, LimitField (Jackson XML)
-├── repository/     CardLimitRepository, LimitMasterRepository
-├── entity/         CardLimit, LimitMaster
-├── dto/            CardLimitDTO, IsoParseRequest, IsoParseResponse
+├── repository/     CardLimitRepository, IsoAuditRepository, LimitMasterRepository
+├── entity/         CardLimit, LimitMaster, IsoAudit
+├── dto/            CardLimitDTO, IsoParseRequest, IsoParseResponse, IsoParseResult
 ├── exception/      IsoParseException, XmlParseException, GlobalExceptionHandler
-└── util/           HexUtil
+└── util/           HexUtil, IsoFieldFormatter
 ```
 
 ---
 
 ## Testing
 
-See **POSTMAN_TEST.md** for Postman setup and sample HEX payload.
+See **TEST_DATA.md** for Postman setup, sample HEX payloads, and combination tests (CASH/POS/ECOM limits in hundreds, thousands, lakhs, crores).
 
