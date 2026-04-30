@@ -2,6 +2,8 @@ package com.hitachi.iso_parser.service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
@@ -39,20 +41,36 @@ public class LimitCalculationService {
         this.limitConfig = limitConfig;
     }
 
-    public String buildLimitString(CardLimitDTO dto) {
-        String posLimit = getValue(dto.getGoodsLimit());
-        String ecomLimit = getValue(dto.getCardNotPresentLimit());
-        String cashLimit = getValue(dto.getCashLimit());
-
+    public LimitEngineResult buildLimitResult(CardLimitDTO dto) {
         Map<String, LimitMaster> masterMap = getMasterMap();
+        List<ResolvedLimitSegment> known = new ArrayList<>();
+        List<ResolvedLimitSegment> unknown = new ArrayList<>();
 
-        String f = limitConfig.getMax12();
+        for (Map.Entry<String, String> entry : dto.getLimits().entrySet()) {
+            String fieldName = entry.getKey();
+            String value = getValue(entry.getValue());
+            LimitMaster master = masterMap.get(fieldName);
 
-        String a1 = buildPart(masterMap.get("goods_limit"), f, posLimit);
-        String a2 = buildPart(masterMap.get("card_not_present_limit"), f, ecomLimit);
-        String a3 = buildPart(masterMap.get("cash_limit"), f, cashLimit);
+            if (master != null) {
+                ResolvedLimitSegment segment = buildKnownSegment(master, fieldName, value);
+                known.add(segment);
+            } else {
+                ResolvedLimitSegment segment = new ResolvedLimitSegment();
+                segment.setFieldName(fieldName);
+                segment.setValue(value);
+                segment.setKnown(false);
+                unknown.add(segment);
+            }
+        }
 
-        return a1 + a2 + a3;
+        known.sort(Comparator.comparing(ResolvedLimitSegment::getPriority, Comparator.nullsLast(Integer::compareTo)));
+        String payload = known.stream().map(ResolvedLimitSegment::getSegmentPayload).collect(Collectors.joining());
+
+        LimitEngineResult result = new LimitEngineResult();
+        result.setKnownSegments(known);
+        result.setUnknownSegments(unknown);
+        result.setLimitPayload(payload);
+        return result;
     }
 
     /**
@@ -61,7 +79,8 @@ public class LimitCalculationService {
      * Inner: 1 2 {rule_nr} 2 {limit_values_len} [limit_values]
      * limit_values_len is calculated from f|f|val|f|f|val|f (e.g. 76 for val="80000").
      */
-    private String buildPart(LimitMaster master, String f, String value) {
+    private ResolvedLimitSegment buildKnownSegment(LimitMaster master, String fieldName, String value) {
+        String f = limitConfig.getMax12();
         int profileNr = (master != null && master.getLimitPnr() != null) ? master.getLimitPnr() : limitConfig.getDefaultProfileNr();
         int ruleNr = (master != null && master.getLimitRuleNr() != null) ? master.getLimitRuleNr() : limitConfig.getDefaultRuleNr();
 
@@ -73,7 +92,17 @@ public class LimitCalculationService {
         int innerDataLen = innerData.length();
 
         String outerHeader = "1" + "2" + pad2(profileNr) + "2" + pad2(innerDataLen);
-        return outerHeader + innerData;
+        String segmentPayload = outerHeader + innerData;
+
+        ResolvedLimitSegment segment = new ResolvedLimitSegment();
+        segment.setFieldName(fieldName);
+        segment.setValue(value);
+        segment.setProfileNr(profileNr);
+        segment.setRuleNr(ruleNr);
+        segment.setPriority(master != null ? master.getPriority() : null);
+        segment.setSegmentPayload(segmentPayload);
+        segment.setKnown(true);
+        return segment;
     }
 
     private String buildLimitValues(String f, String value) {
@@ -97,7 +126,7 @@ public class LimitCalculationService {
     }
 
     private Map<String, LimitMaster> getMasterMap() {
-        List<LimitMaster> masters = limitMasterRepository.findAll();
+        List<LimitMaster> masters = limitMasterRepository.findByIsActiveTrueOrderByPriorityAsc();
         if (masters == null || masters.isEmpty()) {
             return Map.of();
         }

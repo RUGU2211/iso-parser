@@ -1,6 +1,7 @@
 package com.hitachi.iso_parser.repository;
 
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -12,5 +13,7 @@ import com.hitachi.iso_parser.entity.LimitMaster;
 public interface LimitMasterRepository extends JpaRepository<LimitMaster,Long> {
 
  Optional<LimitMaster> findByLimitName(String limitName);
+
+ List<LimitMaster> findByIsActiveTrueOrderByPriorityAsc();
 
 }

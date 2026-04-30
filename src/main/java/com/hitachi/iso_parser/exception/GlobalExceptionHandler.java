@@ -1,6 +1,7 @@
 package com.hitachi.iso_parser.exception;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -9,6 +10,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.hitachi.iso_parser.config.IsoConfig;
 import com.hitachi.iso_parser.dto.IsoParseResponse;
@@ -71,5 +73,13 @@ public class GlobalExceptionHandler {
         response.setMessage("Processing failed: " + e.getMessage());
         response.setDe39(isoConfig.getDe39Failed());
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+    }
+
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<Map<String, Object>> handleResponseStatus(ResponseStatusException e) {
+        return ResponseEntity.status(e.getStatusCode())
+                .body(Map.of(
+                        "success", false,
+                        "message", e.getReason() != null ? e.getReason() : "Request failed"));
     }
 }

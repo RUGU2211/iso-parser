@@ -1,0 +1,221 @@
+{
+  "info": {
+    "_postman_id": "7d9b67a9-8a2b-4b2f-a6f5-9c9b93a6d6d1",
+    "name": "ISO Parser API Collection",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Main tests are ISO HEX parse requests. CRUD requests are optional admin/testing APIs."
+  },
+  "item": [
+    {
+      "name": "ISO Parse (Main Tests - HEX Format Only)",
+      "item": [
+        {
+          "name": "ISO Parse - Raw HEX (3 known fields)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/plain"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{{isoHexKnownOnly}}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/iso/limit/{{pan}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "iso",
+                "limit",
+                "{{pan}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "ISO Parse - Raw HEX (mixed known + extra fields)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/plain"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{{isoHexMixedFields}}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/iso/limit/{{pan}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "iso",
+                "limit",
+                "{{pan}}"
+              ]
+            },
+            "description": "Use full ISO HEX payload format. XML inside DE127 can contain mixed order fields. Known fields are mapped to core tables; unknown fields go to limit_extra_data. If XML changes, regenerate full HEX using root helper IsoHexGenerator.java."
+          }
+        },
+        {
+          "name": "ISO Parse - JSON Wrapper (optional)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isoMessage\": \"{{isoHexKnownOnly}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/iso/limit/{{pan}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "iso",
+                "limit",
+                "{{pan}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Optional Admin/Testing CRUD APIs",
+      "item": [
+        {
+          "name": "Limits - Create (POST)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/plain"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{{isoHexKnownOnly}}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/iso/limit/{{pan}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "iso",
+                "limit",
+                "{{pan}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Limits - Upsert (PUT)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/plain"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{{isoHexMixedFields}}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/iso/limit/{{pan}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "iso",
+                "limit",
+                "{{pan}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Limits - Get by PAN (GET)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/iso/limit/{{pan}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "iso",
+                "limit",
+                "{{pan}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Limits - Delete by PAN (DELETE)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/iso/limit/{{pan}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "iso",
+                "limit",
+                "{{pan}}"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8081"
+    },
+    {
+      "key": "pan",
+      "value": "3538210000000026"
+    },
+    {
+      "key": "panMixed",
+      "value": "4000000000001111"
+    },
+    {
+      "key": "isoHexKnownOnly",
+      "value": "30363030e23c468000e00000000000001000002231363335333231303030303030303032363931303030303033313331313237343932353230333531313237343930333133333030353131313131303030303031313630313233343536373132333435363738393031323334356162636465666768696a6b6c6d6e6f707172737475767778797a3031323334353637383930313233303531303031313031353135333232303337323733373330303030303336344000040080000000313432303236303331333131323734393030333331323239506f7374696c696f6e3a496e71756972794f7255706461746544617461333239353c3f786d6c2076657273696f6e3d22312e302220656e636f64696e673d225554462d38223f3e3c496e71756972794f72557064617465446174613e3c436172643e3c50414e3e333533383231303030303030303032363c2f50414e3e3c457870697279446174653e333030353c2f457870697279446174653e3c5365714e723e3030313c2f5365714e723e3c4669656c64204e616d653d22636173685f6c696d6974223e32303030303c2f4669656c643e3c4669656c64204e616d653d22676f6f64735f6c696d6974223e38303030303c2f4669656c643e3c4669656c64204e616d653d22636172645f6e6f745f70726573656e745f6c696d6974223e39303030303c2f4669656c643e3c2f436172643e3c2f496e71756972794f72557064617465446174613e35303236"
+    },
+    {
+      "key": "isoHexMixedFields",
+      "value": "REPLACE_WITH_FULL_ISO_HEX_PAYLOAD_CONTAINING_XML_FIELDS_cash_limit_goods_limit_card_not_present_limit_atm_limit_international_limit_contactless_limit_recurring_limit_upi_limit_tap_and_pay_limit"
+    }
+  ]
+}

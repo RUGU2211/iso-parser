@@ -90,14 +90,10 @@ public class XmlLimitParser {
                 if (field.getValue() != null) {
                     value = field.getValue().trim();
                 }
-
-                if (name.equals("cash_limit")) {
-                    dto.setCashLimit(value);
-                } else if (name.equals("goods_limit")) {
-                    dto.setGoodsLimit(value);
-                } else if (name.equals("card_not_present_limit")) {
-                    dto.setCardNotPresentLimit(value);
+                if (!value.isEmpty() && !value.matches("^\\d+$")) {
+                    throw new XmlParseException("Limit value must be numeric for field: " + name);
                 }
+                dto.putLimit(name, value);
             }
         }
 

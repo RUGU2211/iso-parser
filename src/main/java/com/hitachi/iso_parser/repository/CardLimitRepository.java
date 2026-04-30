@@ -1,5 +1,6 @@
 package com.hitachi.iso_parser.repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -13,5 +14,11 @@ public interface CardLimitRepository extends JpaRepository<CardLimit,Long> {
  Optional<CardLimit> findByPan(String pan);
 
  Optional<CardLimit> findByPanAndSeqNr(String pan, String seqNr);
+
+ List<CardLimit> findAllByPan(String pan);
+
+ boolean existsByPan(String pan);
+
+ void deleteByPan(String pan);
 
 }

@@ -1,14 +1,15 @@
 package com.hitachi.iso_parser.dto;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 public class CardLimitDTO {
 
     private String pan;
     private String expiryDate;
     private String seqNr;
 
-    private String cashLimit;
-    private String goodsLimit;
-    private String cardNotPresentLimit;
+    private Map<String, String> limits = new LinkedHashMap<>();
 
     public String getPan() {
         return pan;
@@ -34,27 +35,29 @@ public class CardLimitDTO {
         this.seqNr = seqNr;
     }
 
-    public String getCashLimit() {
-        return cashLimit;
+    public Map<String, String> getLimits() {
+        return limits;
     }
 
-    public void setCashLimit(String cashLimit) {
-        this.cashLimit = cashLimit;
+    public void setLimits(Map<String, String> limits) {
+        this.limits = (limits != null) ? limits : new LinkedHashMap<>();
     }
 
-    public String getGoodsLimit() {
-        return goodsLimit;
+    public void putLimit(String name, String value) {
+        if (name == null || name.trim().isEmpty()) {
+            return;
+        }
+        limits.put(name.trim(), value != null ? value.trim() : "");
     }
 
-    public void setGoodsLimit(String goodsLimit) {
-        this.goodsLimit = goodsLimit;
+    public String getLimitValue(String name) {
+        if (name == null) {
+            return null;
+        }
+        return limits.get(name);
     }
 
-    public String getCardNotPresentLimit() {
-        return cardNotPresentLimit;
-    }
-
-    public void setCardNotPresentLimit(String cardNotPresentLimit) {
-        this.cardNotPresentLimit = cardNotPresentLimit;
+    public boolean hasLimit(String name) {
+        return name != null && limits.containsKey(name);
     }
 }

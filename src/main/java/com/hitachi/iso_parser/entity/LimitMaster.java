@@ -16,6 +16,13 @@ public class LimitMaster {
 
 	private Integer limitRuleNr;
 
+	@Column(length = 30)
+	private String limitType;
+
+	private Integer priority;
+
+	private Boolean isActive = Boolean.TRUE;
+
 	public Long getId() {
 		return id;
 	}
@@ -46,6 +53,30 @@ public class LimitMaster {
 
 	public void setLimitRuleNr(Integer limitRuleNr) {
 		this.limitRuleNr = limitRuleNr;
+	}
+
+	public String getLimitType() {
+		return limitType;
+	}
+
+	public void setLimitType(String limitType) {
+		this.limitType = limitType;
+	}
+
+	public Integer getPriority() {
+		return priority;
+	}
+
+	public void setPriority(Integer priority) {
+		this.priority = priority;
+	}
+
+	public Boolean getIsActive() {
+		return isActive;
+	}
+
+	public void setIsActive(Boolean isActive) {
+		this.isActive = isActive;
 	}
 
 }

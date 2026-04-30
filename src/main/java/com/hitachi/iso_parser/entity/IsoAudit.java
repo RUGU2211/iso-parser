@@ -53,6 +53,15 @@ public class IsoAudit {
     @Column(name = "de39", length = 10)
     private String de39;
 
+    @Column(name = "error_message", length = 2000)
+    private String errorMessage;
+
+    @Column(name = "processing_time_ms")
+    private Long processingTimeMs;
+
+    @Column(name = "request_id", length = 100)
+    private String requestId;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
@@ -170,5 +179,29 @@ public class IsoAudit {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public String getErrorMessage() {
+        return errorMessage;
+    }
+
+    public void setErrorMessage(String errorMessage) {
+        this.errorMessage = errorMessage;
+    }
+
+    public Long getProcessingTimeMs() {
+        return processingTimeMs;
+    }
+
+    public void setProcessingTimeMs(Long processingTimeMs) {
+        this.processingTimeMs = processingTimeMs;
+    }
+
+    public String getRequestId() {
+        return requestId;
+    }
+
+    public void setRequestId(String requestId) {
+        this.requestId = requestId;
     }
 }
