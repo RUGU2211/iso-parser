@@ -18,12 +18,12 @@ import com.hitachi.iso_parser.config.IsoConfig;
 import com.hitachi.iso_parser.dto.CardLimitDTO;
 import com.hitachi.iso_parser.dto.IsoParseResponse;
 import com.hitachi.iso_parser.dto.IsoParseResult;
-import com.hitachi.iso_parser.entity.LimitExtraData;
+import com.hitachi.iso_parser.entity.CardLimit;
 import com.hitachi.iso_parser.parser.Iso8583MessageParser;
 import com.hitachi.iso_parser.parser.XmlLimitParser;
 import com.hitachi.iso_parser.repository.CardLimitRepository;
 import com.hitachi.iso_parser.repository.IsoAuditRepository;
-import com.hitachi.iso_parser.repository.LimitExtraDataRepository;
+import com.hitachi.iso_parser.util.ExtraLimitsJsonMapper;
 
 class IsoMessageServiceTest {
 
@@ -32,7 +32,6 @@ class IsoMessageServiceTest {
     private XmlLimitParser xmlParser;
     private LimitCalculationService limitCalculationService;
     private CardLimitRepository cardLimitRepository;
-    private LimitExtraDataRepository limitExtraDataRepository;
     private IsoAuditRepository isoAuditRepository;
 
     @BeforeEach
@@ -41,7 +40,6 @@ class IsoMessageServiceTest {
         xmlParser = Mockito.mock(XmlLimitParser.class);
         limitCalculationService = Mockito.mock(LimitCalculationService.class);
         cardLimitRepository = Mockito.mock(CardLimitRepository.class);
-        limitExtraDataRepository = Mockito.mock(LimitExtraDataRepository.class);
         isoAuditRepository = Mockito.mock(IsoAuditRepository.class);
 
         IsoConfig isoConfig = new IsoConfig();
@@ -56,13 +54,13 @@ class IsoMessageServiceTest {
                 xmlParser,
                 limitCalculationService,
                 cardLimitRepository,
-                limitExtraDataRepository,
                 isoAuditRepository,
-                isoConfig);
+                isoConfig,
+                new ExtraLimitsJsonMapper());
     }
 
     @Test
-    void processIsoMessage_shouldPersistKnownAndUnknownStructuredData() {
+    void processIsoMessage_shouldPersistKnownAndUnknownInSingleCardLimitsRow() {
         IsoParseResult parseResult = new IsoParseResult();
         parseResult.setDe11("123456");
         parseResult.setXml("<InquiryOrUpdateData/>");
@@ -96,18 +94,18 @@ class IsoMessageServiceTest {
         engineResult.setKnownSegments(java.util.List.of(known));
         engineResult.setUnknownSegments(java.util.List.of(unknown));
         when(limitCalculationService.buildLimitResult(any())).thenReturn(engineResult);
-        when(cardLimitRepository.findByPanAndSeqNr("3538210000000026", "001")).thenReturn(Optional.empty());
+        when(cardLimitRepository.findByIssuerNrAndPanAndSeqNrAndDateDeletedIsNull(13, "3538210000000026", "001"))
+                .thenReturn(Optional.empty());
 
         IsoParseResponse response = isoMessageService.processIsoMessage("A1B2");
 
         assertTrue(response.isSuccess());
         assertEquals("00", response.getDe39());
-        verify(cardLimitRepository).save(any());
-        verify(limitExtraDataRepository).deleteByPanAndSeqNr("3538210000000026", "001");
-
-        ArgumentCaptor<LimitExtraData> unknownCaptor = ArgumentCaptor.forClass(LimitExtraData.class);
-        verify(limitExtraDataRepository).save(unknownCaptor.capture());
-        assertEquals("unknown_limit", unknownCaptor.getValue().getFieldName());
+        ArgumentCaptor<CardLimit> cardCaptor = ArgumentCaptor.forClass(CardLimit.class);
+        verify(cardLimitRepository).save(cardCaptor.capture());
+        assertEquals("{\"unknown_limit\":\"12345\"}", cardCaptor.getValue().getLimitExtraData());
+        assertEquals("SEG1", cardCaptor.getValue().getLimits());
+        assertEquals(Integer.valueOf(13), cardCaptor.getValue().getIssuerNr());
 
         verify(isoAuditRepository).save(any());
     }

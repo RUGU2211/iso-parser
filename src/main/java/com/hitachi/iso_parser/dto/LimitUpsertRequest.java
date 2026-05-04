@@ -3,20 +3,27 @@ package com.hitachi.iso_parser.dto;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class LimitUpsertRequest {
 
-    private Integer isoNr;
+    /** Issuer number (same meaning as legacy JSON field {@code isoNr}). */
+    @JsonProperty("issuerNr")
+    @JsonAlias({ "isoNr" })
+    private Integer issuerNr;
+
     private String pan;
     private String seqNr;
     private String lastUpdUser;
     private Map<String, String> limits = new LinkedHashMap<>();
 
-    public Integer getIsoNr() {
-        return isoNr;
+    public Integer getIssuerNr() {
+        return issuerNr;
     }
 
-    public void setIsoNr(Integer isoNr) {
-        this.isoNr = isoNr;
+    public void setIssuerNr(Integer issuerNr) {
+        this.issuerNr = issuerNr;
     }
 
     public String getPan() {

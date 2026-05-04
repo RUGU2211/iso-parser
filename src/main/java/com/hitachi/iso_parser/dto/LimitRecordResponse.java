@@ -4,23 +4,31 @@ import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class LimitRecordResponse {
 
-    private Integer isoNr;
+    @JsonProperty("issuerNr")
+    @JsonAlias({ "isoNr" })
+    private Integer issuerNr;
+
     private String pan;
     private String seqNr;
+    @JsonIgnore
     private String limitsString;
     private String lastUpdUser;
     private LocalDateTime lastUpdDate;
     private Map<String, String> knownLimits = new LinkedHashMap<>();
     private Map<String, String> unknownLimits = new LinkedHashMap<>();
 
-    public Integer getIsoNr() {
-        return isoNr;
+    public Integer getIssuerNr() {
+        return issuerNr;
     }
 
-    public void setIsoNr(Integer isoNr) {
-        this.isoNr = isoNr;
+    public void setIssuerNr(Integer issuerNr) {
+        this.issuerNr = issuerNr;
     }
 
     public String getPan() {

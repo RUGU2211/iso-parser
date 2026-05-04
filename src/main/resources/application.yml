@@ -37,3 +37,5 @@ spring:
   sql:
     init:
       mode: always
+      # Allow PostgreSQL DO $$ ... $$ blocks (semicolons inside must not split the script).
+      separator: "@@"

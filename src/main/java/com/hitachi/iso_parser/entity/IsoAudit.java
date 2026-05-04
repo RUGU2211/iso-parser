@@ -62,6 +62,14 @@ public class IsoAudit {
     @Column(name = "request_id", length = 100)
     private String requestId;
 
+    /** High-level action, e.g. ISO_PARSE, LIMIT_GET, LIMIT_CREATE, LIMIT_UPDATE, LIMIT_DELETE. */
+    @Column(name = "api_operation", length = 32)
+    private String apiOperation;
+
+    /** JSON summary: request/response snippets, counts, outcome (truncated at persist time). */
+    @Column(name = "api_detail", length = 16000)
+    private String apiDetail;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
@@ -203,5 +211,21 @@ public class IsoAudit {
 
     public void setRequestId(String requestId) {
         this.requestId = requestId;
+    }
+
+    public String getApiOperation() {
+        return apiOperation;
+    }
+
+    public void setApiOperation(String apiOperation) {
+        this.apiOperation = apiOperation;
+    }
+
+    public String getApiDetail() {
+        return apiDetail;
+    }
+
+    public void setApiDetail(String apiDetail) {
+        this.apiDetail = apiDetail;
     }
 }

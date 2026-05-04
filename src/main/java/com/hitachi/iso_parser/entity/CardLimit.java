@@ -1,101 +1,157 @@
 package com.hitachi.iso_parser.entity;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
+
+import org.hibernate.annotations.ColumnDefault;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
 
+/**
+ * PostgreSQL table {@code pc_card_ext_lim_12_b}: one active row per (issuer_nr, pan, seq_nr).
+ * <p>
+ * <b>Mapping from inbound XML / ISO flow:</b>
+ * <ul>
+ *   <li>Limits resolved via {@code limit_master} (known types) → concatenated TLV payload → column {@code card_limits}.</li>
+ *   <li>Fields not in {@code limit_master} (unknown / “extra”) → JSON map {@code fieldName → value} → column {@code limit_extra_data}.</li>
+ *   <li>Audit: {@code created_date}, {@code last_updated_date}, {@code last_updated_user}; soft delete → {@code date_deleted}.</li>
+ * </ul>
+ */
 @Entity
-@Table(name = "card_limits", uniqueConstraints = @UniqueConstraint(columnNames = {"pan", "seq_nr"}))
+@Table(name = "pc_card_ext_lim_12_b")
 public class CardLimit {
 
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Long id;
-	private Integer isoNr;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-	private String pan;
+    @ColumnDefault("13")
+    @Column(name = "issuer_nr", nullable = false)
+    private Integer issuerNr;
 
-	private String seqNr;
+    @Column(nullable = false, length = 66)
+    private String pan;
 
-	@Column(length = 1000)
-	private String limits;
+    @Column(name = "seq_nr", nullable = false, length = 3)
+    private String seqNr;
 
-	private LocalDateTime lastUpdDate;
+    @ColumnDefault("''")
+    @Column(name = "card_limits", nullable = false, columnDefinition = "TEXT")
+    private String limits = "";
 
-	private String lastUpdUser;
+    @ColumnDefault("'{}'")
+    @Column(name = "limit_extra_data", nullable = false, columnDefinition = "TEXT")
+    private String limitExtraData = "{}";
 
-	@Column(name = "date_date")
-	private LocalDate dateDate;
+    @ColumnDefault("CURRENT_TIMESTAMP")
+    @Column(name = "created_date", nullable = false)
+    private LocalDateTime createdDate;
 
-	public Long getId() {
-		return id;
-	}
+    @ColumnDefault("CURRENT_TIMESTAMP")
+    @Column(name = "last_updated_date", nullable = false)
+    private LocalDateTime lastUpdatedDate;
 
-	public void setId(Long id) {
-		this.id = id;
-	}
+    @ColumnDefault("'sp'")
+    @Column(name = "last_updated_user", nullable = false, length = 20)
+    private String lastUpdatedUser;
 
-	public Integer getIsoNr() {
-		return isoNr;
-	}
+    @Column(name = "date_deleted")
+    private LocalDateTime dateDeleted;
 
-	public void setIsoNr(Integer isoNr) {
-		this.isoNr = isoNr;
-	}
+    @PrePersist
+    void prePersist() {
+        LocalDateTime now = LocalDateTime.now();
+        if (createdDate == null) {
+            createdDate = now;
+        }
+        if (lastUpdatedDate == null) {
+            lastUpdatedDate = now;
+        }
+    }
 
-	public String getPan() {
-		return pan;
-	}
+    public Long getId() {
+        return id;
+    }
 
-	public void setPan(String pan) {
-		this.pan = pan;
-	}
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-	public String getSeqNr() {
-		return seqNr;
-	}
+    public Integer getIssuerNr() {
+        return issuerNr;
+    }
 
-	public void setSeqNr(String seqNr) {
-		this.seqNr = seqNr;
-	}
+    public void setIssuerNr(Integer issuerNr) {
+        this.issuerNr = issuerNr;
+    }
 
-	public String getLimits() {
-		return limits;
-	}
+    public String getPan() {
+        return pan;
+    }
 
-	public void setLimits(String limits) {
-		this.limits = limits;
-	}
+    public void setPan(String pan) {
+        this.pan = pan;
+    }
 
-	public LocalDateTime getLastUpdDate() {
-		return lastUpdDate;
-	}
+    public String getSeqNr() {
+        return seqNr;
+    }
 
-	public void setLastUpdDate(LocalDateTime lastUpdDate) {
-		this.lastUpdDate = lastUpdDate;
-	}
+    public void setSeqNr(String seqNr) {
+        this.seqNr = seqNr;
+    }
 
-	public String getLastUpdUser() {
-		return lastUpdUser;
-	}
+    /** TLV / encoded payload persisted in column {@code card_limits}. */
+    public String getLimits() {
+        return limits;
+    }
 
-	public void setLastUpdUser(String lastUpdUser) {
-		this.lastUpdUser = lastUpdUser;
-	}
+    public void setLimits(String limits) {
+        this.limits = limits;
+    }
 
-	public LocalDate getDateDate() {
-		return dateDate;
-	}
+    public String getLimitExtraData() {
+        return limitExtraData;
+    }
 
-	public void setDateDate(LocalDate dateDate) {
-		this.dateDate = dateDate;
-	}
+    public void setLimitExtraData(String limitExtraData) {
+        this.limitExtraData = limitExtraData != null ? limitExtraData : "{}";
+    }
 
+    public LocalDateTime getCreatedDate() {
+        return createdDate;
+    }
+
+    public void setCreatedDate(LocalDateTime createdDate) {
+        this.createdDate = createdDate;
+    }
+
+    public LocalDateTime getLastUpdatedDate() {
+        return lastUpdatedDate;
+    }
+
+    public void setLastUpdatedDate(LocalDateTime lastUpdatedDate) {
+        this.lastUpdatedDate = lastUpdatedDate;
+    }
+
+    public String getLastUpdatedUser() {
+        return lastUpdatedUser;
+    }
+
+    public void setLastUpdatedUser(String lastUpdatedUser) {
+        this.lastUpdatedUser = lastUpdatedUser;
+    }
+
+    public LocalDateTime getDateDeleted() {
+        return dateDeleted;
+    }
+
+    public void setDateDeleted(LocalDateTime dateDeleted) {
+        this.dateDeleted = dateDeleted;
+    }
 }

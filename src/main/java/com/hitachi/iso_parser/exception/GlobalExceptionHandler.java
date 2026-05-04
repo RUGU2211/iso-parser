@@ -2,6 +2,7 @@ package com.hitachi.iso_parser.exception;
 
 import java.util.List;
 import java.util.Map;
+import java.util.LinkedHashMap;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -33,11 +34,26 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 
+    @ExceptionHandler(DeletedCardException.class)
+    public ResponseEntity<Map<String, Object>> handleDeletedCard(DeletedCardException e) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("success", false);
+        body.put("message", "Card is deleted and cannot be " + e.getAction());
+        body.put("cardStatus", "DELETED");
+        body.put("deleteByUser", e.getDeleteByUser());
+        body.put("deleteDateTime", e.getDeleteDateTime());
+        body.put("lastUpdatedUser", e.getLastUpdatedUser());
+        body.put("pan", e.getPan());
+        body.put("seqNr", e.getSeqNr());
+        body.put("issuerNr", e.getIssuerNr());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
+    }
+
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<IsoParseResponse> handleBadRequest(HttpMessageNotReadableException e) {
         IsoParseResponse response = new IsoParseResponse();
         response.setSuccess(false);
-        response.setMessage("Invalid request body. Send raw ISO HEX as text/plain.");
+        response.setMessage("Invalid request body. Use application/json for limit create/update, or text/plain raw ISO HEX for parse on POST /api/iso/limit/{pan}.");
         response.setDe39(isoConfig.getDe39Failed());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
@@ -66,6 +82,14 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<Map<String, Object>> handleResponseStatus(ResponseStatusException e) {
+        return ResponseEntity.status(e.getStatusCode())
+                .body(Map.of(
+                        "success", false,
+                        "message", e.getReason() != null ? e.getReason() : "Request failed"));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<IsoParseResponse> handleGeneric(Exception e) {
         IsoParseResponse response = new IsoParseResponse();
@@ -73,13 +97,5 @@ public class GlobalExceptionHandler {
         response.setMessage("Processing failed: " + e.getMessage());
         response.setDe39(isoConfig.getDe39Failed());
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-    }
-
-    @ExceptionHandler(ResponseStatusException.class)
-    public ResponseEntity<Map<String, Object>> handleResponseStatus(ResponseStatusException e) {
-        return ResponseEntity.status(e.getStatusCode())
-                .body(Map.of(
-                        "success", false,
-                        "message", e.getReason() != null ? e.getReason() : "Request failed"));
     }
 }

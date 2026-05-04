@@ -24,8 +24,10 @@ public class IsoController {
         this.isoConfig = isoConfig;
     }
 
+    /** Raw ISO8583 HEX in body; distinguished from JSON CRUD by {@code Content-Type: text/plain}. */
     @PostMapping(value = "/{pan}", consumes = MediaType.TEXT_PLAIN_VALUE)
-    public ResponseEntity<IsoParseResponse> parseIsoRaw(@PathVariable("pan") String pan, @RequestBody(required = false) String hexMessage) {
+    public ResponseEntity<IsoParseResponse> parseIsoRaw(@PathVariable("pan") String pan,
+            @RequestBody(required = false) String hexMessage) {
         String message = (hexMessage != null) ? hexMessage.trim() : "";
         return processAndRespond(message);
     }

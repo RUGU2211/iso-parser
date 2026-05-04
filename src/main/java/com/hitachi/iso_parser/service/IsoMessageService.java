@@ -1,60 +1,72 @@
 package com.hitachi.iso_parser.service;
 
 import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hitachi.iso_parser.config.IsoConfig;
 import com.hitachi.iso_parser.dto.CardLimitDTO;
 import com.hitachi.iso_parser.dto.IsoParseResponse;
 import com.hitachi.iso_parser.dto.IsoParseResult;
 import com.hitachi.iso_parser.entity.CardLimit;
 import com.hitachi.iso_parser.entity.IsoAudit;
-import com.hitachi.iso_parser.entity.LimitExtraData;
 import com.hitachi.iso_parser.parser.Iso8583MessageParser;
 import com.hitachi.iso_parser.parser.XmlLimitParser;
 import com.hitachi.iso_parser.repository.CardLimitRepository;
 import com.hitachi.iso_parser.repository.IsoAuditRepository;
-import com.hitachi.iso_parser.repository.LimitExtraDataRepository;
+import com.hitachi.iso_parser.util.ExtraLimitsJsonMapper;
 import com.hitachi.iso_parser.util.IsoFieldFormatter;
 
 @Service
 public class IsoMessageService {
 
-    private Iso8583MessageParser isoParser;
-    private XmlLimitParser xmlParser;
-    private LimitCalculationService limitCalculationService;
-    private CardLimitRepository cardLimitRepository;
-    private LimitExtraDataRepository limitExtraDataRepository;
-    private IsoAuditRepository isoAuditRepository;
-    private IsoConfig isoConfig;
+    private final Iso8583MessageParser isoParser;
+    private final XmlLimitParser xmlParser;
+    private final LimitCalculationService limitCalculationService;
+    private final CardLimitRepository cardLimitRepository;
+    private final IsoAuditRepository isoAuditRepository;
+    private final IsoConfig isoConfig;
+    private final ExtraLimitsJsonMapper extraLimitsJsonMapper;
+    private final ObjectMapper auditObjectMapper = new ObjectMapper();
 
     public IsoMessageService(Iso8583MessageParser isoParser, XmlLimitParser xmlParser,
             LimitCalculationService limitCalculationService, CardLimitRepository cardLimitRepository,
-            LimitExtraDataRepository limitExtraDataRepository,
-            IsoAuditRepository isoAuditRepository, IsoConfig isoConfig) {
+            IsoAuditRepository isoAuditRepository, IsoConfig isoConfig,
+            ExtraLimitsJsonMapper extraLimitsJsonMapper) {
         this.isoParser = isoParser;
         this.xmlParser = xmlParser;
         this.limitCalculationService = limitCalculationService;
         this.cardLimitRepository = cardLimitRepository;
-        this.limitExtraDataRepository = limitExtraDataRepository;
         this.isoAuditRepository = isoAuditRepository;
         this.isoConfig = isoConfig;
+        this.extraLimitsJsonMapper = extraLimitsJsonMapper;
     }
 
     @Transactional
     public IsoParseResponse processIsoMessage(String hexMessage) {
+        return processIsoMessage(hexMessage, null);
+    }
+
+    @Transactional
+    public IsoParseResponse processIsoMessage(String hexMessage, String requestUser) {
         long startNs = System.nanoTime();
         IsoAudit audit = new IsoAudit();
         audit.setReqIn(hexMessage);
         audit.setBinaryHex(hexMessage);
         audit.setCreatedAt(LocalDateTime.now());
         audit.setRequestId(UUID.randomUUID().toString());
+        String actor = trimUser(isoConfig.getLastUpdUser());
 
+        CardLimitDTO dto = null;
+        LimitEngineResult limitResult = null;
         try {
-            CardLimitDTO dto = parseInputToCardLimitDto(hexMessage, audit);
+            dto = parseInputToCardLimitDto(hexMessage, audit);
 
             audit.setPan(dto.getPan());
             audit.setExpiryDate(dto.getExpiryDate());
@@ -63,23 +75,31 @@ public class IsoMessageService {
             audit.setGoodsLimit(dto.getLimitValue("goods_limit"));
             audit.setCardNotPresentLimit(dto.getLimitValue("card_not_present_limit"));
 
-            LimitEngineResult limitResult = limitCalculationService.buildLimitResult(dto);
+            limitResult = limitCalculationService.buildLimitResult(dto);
             String limitString = limitResult.getLimitPayload();
 
             String pan = dto.getPan();
             String seqNr = (dto.getSeqNr() != null && !dto.getSeqNr().isEmpty()) ? dto.getSeqNr() : isoConfig.getDefaultSeqNr();
+            Integer issuerNr = isoConfig.getDefaultNr();
 
-            CardLimit entity = cardLimitRepository.findByPanAndSeqNr(pan, seqNr).orElse(new CardLimit());
+            CardLimit entity = cardLimitRepository
+                    .findByIssuerNrAndPanAndSeqNrAndDateDeletedIsNull(issuerNr, pan, seqNr)
+                    .orElse(new CardLimit());
 
-            entity.setIsoNr(isoConfig.getDefaultNr());
+            LocalDateTime now = LocalDateTime.now();
+            if (entity.getId() == null) {
+                entity.setCreatedDate(now);
+            }
+            entity.setIssuerNr(issuerNr);
             entity.setPan(pan);
             entity.setSeqNr(seqNr);
             entity.setLimits(limitString);
-            entity.setLastUpdDate(LocalDateTime.now());
-            entity.setLastUpdUser(isoConfig.getLastUpdUser());
+            entity.setLimitExtraData(buildExtraJson(limitResult));
+            entity.setLastUpdatedDate(now);
+            entity.setLastUpdatedUser(actor);
+            entity.setDateDeleted(null);
 
             cardLimitRepository.save(entity);
-            persistStructuredLimits(pan, seqNr, limitResult);
 
             IsoParseResponse response = new IsoParseResponse();
             response.setSuccess(true);
@@ -89,6 +109,8 @@ public class IsoMessageService {
             audit.setRespOut(toJsonResponse(response));
             audit.setDe39(isoConfig.getDe39Success());
             audit.setProcessingTimeMs((System.nanoTime() - startNs) / 1_000_000);
+            audit.setApiOperation("ISO_PARSE");
+            audit.setApiDetail(buildIsoParseApiDetail(true, actor, dto, limitResult, null));
             isoAuditRepository.save(audit);
 
             return response;
@@ -102,10 +124,56 @@ public class IsoMessageService {
             audit.setDe39(isoConfig.getDe39Failed());
             audit.setErrorMessage(e.getMessage());
             audit.setProcessingTimeMs((System.nanoTime() - startNs) / 1_000_000);
+            audit.setApiOperation("ISO_PARSE");
+            audit.setApiDetail(buildIsoParseApiDetail(false, actor, dto, limitResult, e.getMessage()));
             isoAuditRepository.save(audit);
 
             return response;
         }
+    }
+
+    private String buildIsoParseApiDetail(boolean success, String requestUser, CardLimitDTO dto, LimitEngineResult limitResult, String error) {
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("resource", "ISO");
+        m.put("success", success);
+        m.put("requestedByUser", requestUser);
+        if (dto != null) {
+            m.put("pan", dto.getPan());
+            m.put("seqNr", dto.getSeqNr());
+        }
+        if (limitResult != null) {
+            m.put("knownSegmentCount", limitResult.getKnownSegments().size());
+            m.put("unknownSegmentCount", limitResult.getUnknownSegments().size());
+            String payload = limitResult.getLimitPayload();
+            m.put("limitPayloadLen", payload != null ? payload.length() : 0);
+        }
+        if (error != null) {
+            m.put("error", error.length() > 2000 ? error.substring(0, 2000) : error);
+        }
+        try {
+            String json = auditObjectMapper.writeValueAsString(m);
+            return json.length() > 15500 ? json.substring(0, 15500) + "…" : json;
+        } catch (JsonProcessingException ex) {
+            return "{\"resource\":\"ISO\",\"detailSerializeError\":true}";
+        }
+    }
+
+    private String buildExtraJson(LimitEngineResult limitResult) {
+        Map<String, String> extra = new LinkedHashMap<>();
+        for (ResolvedLimitSegment segment : limitResult.getUnknownSegments()) {
+            extra.put(segment.getFieldName(), segment.getValue());
+        }
+        return extraLimitsJsonMapper.toJson(extra);
+    }
+
+    private String trimUser(String value) {
+        if (value == null) {
+            return "";
+        }
+        if (value.length() <= 20) {
+            return value;
+        }
+        return value.substring(0, 20);
     }
 
     private CardLimitDTO parseInputToCardLimitDto(String input, IsoAudit audit) {
@@ -160,28 +228,15 @@ public class IsoMessageService {
         return input.substring(start, end + closingTag.length());
     }
 
-    private void persistStructuredLimits(String pan, String seqNr, LimitEngineResult limitResult) {
-        LocalDateTime now = LocalDateTime.now();
-
-        limitExtraDataRepository.deleteByPanAndSeqNr(pan, seqNr);
-        for (ResolvedLimitSegment segment : limitResult.getUnknownSegments()) {
-            LimitExtraData extra = new LimitExtraData();
-            extra.setPan(pan);
-            extra.setSeqNr(seqNr);
-            extra.setFieldName(segment.getFieldName());
-            extra.setFieldValue(segment.getValue());
-            extra.setSource("XML");
-            extra.setCreatedAt(now);
-            limitExtraDataRepository.save(extra);
-        }
-    }
-
     private String toJsonResponse(IsoParseResponse r) {
-        return "{\"success\":" + r.isSuccess() + ",\"message\":\"" + escape(r.getMessage()) + "\",\"de39\":\"" + (r.getDe39() != null ? r.getDe39() : "") + "\"}";
+        return "{\"success\":" + r.isSuccess() + ",\"message\":\"" + escape(r.getMessage()) + "\",\"de39\":\""
+                + (r.getDe39() != null ? r.getDe39() : "") + "\"}";
     }
 
     private String escape(String s) {
-        if (s == null) return "";
+        if (s == null) {
+            return "";
+        }
         return s.replace("\\", "\\\\").replace("\"", "\\\"");
     }
 }
