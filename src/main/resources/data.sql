@@ -48,7 +48,7 @@ BEGIN
 END $$@@
 
 ALTER TABLE IF EXISTS public.pc_card_ext_lim_12_b ADD COLUMN IF NOT EXISTS issuer_nr INTEGER@@
-ALTER TABLE IF EXISTS public.pc_card_ext_lim_12_b ADD COLUMN IF NOT EXISTS limit_extra_data TEXT NOT NULL DEFAULT '{}'::text@@
+ALTER TABLE IF EXISTS public.pc_card_ext_lim_12_b ADD COLUMN IF NOT EXISTS total_data_received TEXT NOT NULL DEFAULT '{}'::text@@
 ALTER TABLE IF EXISTS public.pc_card_ext_lim_12_b ADD COLUMN IF NOT EXISTS created_date TIMESTAMP@@
 ALTER TABLE IF EXISTS public.pc_card_ext_lim_12_b ADD COLUMN IF NOT EXISTS last_updated_date TIMESTAMP@@
 ALTER TABLE IF EXISTS public.pc_card_ext_lim_12_b ADD COLUMN IF NOT EXISTS last_updated_user VARCHAR(20)@@
@@ -89,18 +89,14 @@ ALTER TABLE IF EXISTS public.pc_card_ext_lim_12_b ALTER COLUMN card_limits SET D
 
 DO $$
 BEGIN
-    IF to_regclass('public.limit_extra_data') IS NOT NULL
-       AND EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'pc_card_ext_lim_12_b' AND column_name = 'limit_extra_data') THEN
-        UPDATE public.pc_card_ext_lim_12_b c
-        SET limit_extra_data = COALESCE(e.merged, '{}')
-        FROM (
-            SELECT pan, seq_nr, COALESCE(json_object_agg(field_name, field_value)::text, '{}') AS merged
-            FROM public.limit_extra_data
-            GROUP BY pan, seq_nr
-        ) e
-        WHERE c.pan = e.pan AND c.seq_nr = e.seq_nr;
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'pc_card_ext_lim_12_b' AND column_name = 'limit_extra_data')
+       AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'pc_card_ext_lim_12_b' AND column_name = 'total_data_received') THEN
+        ALTER TABLE public.pc_card_ext_lim_12_b RENAME COLUMN limit_extra_data TO total_data_received;
     END IF;
 END $$@@
+
+UPDATE public.pc_card_ext_lim_12_b
+SET total_data_received = COALESCE(NULLIF(total_data_received, ''), '{}')@@
 
 DROP TABLE IF EXISTS public.limit_extra_data@@
 
@@ -130,20 +126,32 @@ CREATE INDEX IF NOT EXISTS ix_pc_card_ext_lim_12_b_issuer_pan
     INCLUDE (seq_nr, last_updated_date)
     WHERE date_deleted IS NULL@@
 
-ALTER TABLE IF EXISTS public.iso_audit ADD COLUMN IF NOT EXISTS api_operation VARCHAR(32)@@
-ALTER TABLE IF EXISTS public.iso_audit ADD COLUMN IF NOT EXISTS api_detail VARCHAR(16000)@@
+ALTER TABLE IF EXISTS public.iso_audit DROP COLUMN IF EXISTS binary_hex@@
+ALTER TABLE IF EXISTS public.iso_audit DROP COLUMN IF EXISTS iso_fields_formatted@@
+ALTER TABLE IF EXISTS public.iso_audit DROP COLUMN IF EXISTS de11@@
+ALTER TABLE IF EXISTS public.iso_audit DROP COLUMN IF EXISTS pan@@
+ALTER TABLE IF EXISTS public.iso_audit DROP COLUMN IF EXISTS expiry_date@@
+ALTER TABLE IF EXISTS public.iso_audit DROP COLUMN IF EXISTS seq_nr@@
+ALTER TABLE IF EXISTS public.iso_audit DROP COLUMN IF EXISTS cash_limit@@
+ALTER TABLE IF EXISTS public.iso_audit DROP COLUMN IF EXISTS goods_limit@@
+ALTER TABLE IF EXISTS public.iso_audit DROP COLUMN IF EXISTS card_not_present_limit@@
+ALTER TABLE IF EXISTS public.iso_audit DROP COLUMN IF EXISTS error_message@@
+ALTER TABLE IF EXISTS public.iso_audit DROP COLUMN IF EXISTS processing_time_ms@@
+ALTER TABLE IF EXISTS public.iso_audit DROP COLUMN IF EXISTS request_id@@
+ALTER TABLE IF EXISTS public.iso_audit DROP COLUMN IF EXISTS api_operation@@
+ALTER TABLE IF EXISTS public.iso_audit DROP COLUMN IF EXISTS api_detail@@
 
 ALTER TABLE IF EXISTS limit_master ADD COLUMN IF NOT EXISTS limit_type VARCHAR(30)@@
 ALTER TABLE IF EXISTS limit_master ADD COLUMN IF NOT EXISTS priority INTEGER@@
 ALTER TABLE IF EXISTS limit_master ADD COLUMN IF NOT EXISTS is_active BOOLEAN@@
 
 INSERT INTO limit_master (limit_name, limit_pnr, limit_rule_nr, limit_type, priority, is_active) VALUES
-('goods_limit', 42, 52, 'POS', 40, true),
-('card_not_present_limit', 41, 53, 'ECOM', 60, true),
-('cash_limit', 42, 54, 'CASH', 20, true),
-('upi_limit', 41, 55, 'UPI', 10, true),
-('tap_and_pay_limit', 42, 56, 'TAP', 30, true),
-('international_limit', 42, 57, 'INTL', 50, true),
+('goods_limit', 42, 52, 'POS', 10, true),
+('card_not_present_limit', 41, 53, 'ECOM', 20, true),
+('cash_limit', 42, 54, 'CASH', 30, true),
+('upi_limit', 41, 55, 'UPI', 40, true),
+('tap_and_pay_limit', 42, 56, 'TAP', 50, true),
+('international_limit', 42, 57, 'INTL', 60, true),
 ('atm_limit', 42, 58, 'ATM', 70, true),
 ('recurring_limit', 41, 59, 'RECUR', 80, true),
 ('contactless_limit', 42, 60, 'CLESS', 90, true)

@@ -20,55 +20,11 @@ public class IsoAudit {
     @Column(name = "req_in", length = 8000)
     private String reqIn;
 
-    @Column(name = "binary_hex", length = 8000)
-    private String binaryHex;
-
-    @Column(name = "iso_fields_formatted", length = 16000)
-    private String isoFieldsFormatted;
-
-    @Column(name = "resp_out", length = 4000)
+    @Column(name = "resp_out", length = 8000)
     private String respOut;
-
-    @Column(name = "de11", length = 20)
-    private String de11;
-
-    @Column(name = "pan", length = 50)
-    private String pan;
-
-    @Column(name = "expiry_date", length = 10)
-    private String expiryDate;
-
-    @Column(name = "seq_nr", length = 10)
-    private String seqNr;
-
-    @Column(name = "cash_limit", length = 50)
-    private String cashLimit;
-
-    @Column(name = "goods_limit", length = 50)
-    private String goodsLimit;
-
-    @Column(name = "card_not_present_limit", length = 50)
-    private String cardNotPresentLimit;
 
     @Column(name = "de39", length = 10)
     private String de39;
-
-    @Column(name = "error_message", length = 2000)
-    private String errorMessage;
-
-    @Column(name = "processing_time_ms")
-    private Long processingTimeMs;
-
-    @Column(name = "request_id", length = 100)
-    private String requestId;
-
-    /** High-level action, e.g. ISO_PARSE, LIMIT_GET, LIMIT_CREATE, LIMIT_UPDATE, LIMIT_DELETE. */
-    @Column(name = "api_operation", length = 32)
-    private String apiOperation;
-
-    /** JSON summary: request/response snippets, counts, outcome (truncated at persist time). */
-    @Column(name = "api_detail", length = 16000)
-    private String apiDetail;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
@@ -93,84 +49,12 @@ public class IsoAudit {
         this.reqIn = reqIn;
     }
 
-    public String getBinaryHex() {
-        return binaryHex;
-    }
-
-    public void setBinaryHex(String binaryHex) {
-        this.binaryHex = binaryHex;
-    }
-
-    public String getIsoFieldsFormatted() {
-        return isoFieldsFormatted;
-    }
-
-    public void setIsoFieldsFormatted(String isoFieldsFormatted) {
-        this.isoFieldsFormatted = isoFieldsFormatted;
-    }
-
     public String getRespOut() {
         return respOut;
     }
 
     public void setRespOut(String respOut) {
         this.respOut = respOut;
-    }
-
-    public String getDe11() {
-        return de11;
-    }
-
-    public void setDe11(String de11) {
-        this.de11 = de11;
-    }
-
-    public String getPan() {
-        return pan;
-    }
-
-    public void setPan(String pan) {
-        this.pan = pan;
-    }
-
-    public String getExpiryDate() {
-        return expiryDate;
-    }
-
-    public void setExpiryDate(String expiryDate) {
-        this.expiryDate = expiryDate;
-    }
-
-    public String getSeqNr() {
-        return seqNr;
-    }
-
-    public void setSeqNr(String seqNr) {
-        this.seqNr = seqNr;
-    }
-
-    public String getCashLimit() {
-        return cashLimit;
-    }
-
-    public void setCashLimit(String cashLimit) {
-        this.cashLimit = cashLimit;
-    }
-
-    public String getGoodsLimit() {
-        return goodsLimit;
-    }
-
-    public void setGoodsLimit(String goodsLimit) {
-        this.goodsLimit = goodsLimit;
-    }
-
-    public String getCardNotPresentLimit() {
-        return cardNotPresentLimit;
-    }
-
-    public void setCardNotPresentLimit(String cardNotPresentLimit) {
-        this.cardNotPresentLimit = cardNotPresentLimit;
     }
 
     public String getDe39() {
@@ -189,43 +73,4 @@ public class IsoAudit {
         this.createdAt = createdAt;
     }
 
-    public String getErrorMessage() {
-        return errorMessage;
-    }
-
-    public void setErrorMessage(String errorMessage) {
-        this.errorMessage = errorMessage;
-    }
-
-    public Long getProcessingTimeMs() {
-        return processingTimeMs;
-    }
-
-    public void setProcessingTimeMs(Long processingTimeMs) {
-        this.processingTimeMs = processingTimeMs;
-    }
-
-    public String getRequestId() {
-        return requestId;
-    }
-
-    public void setRequestId(String requestId) {
-        this.requestId = requestId;
-    }
-
-    public String getApiOperation() {
-        return apiOperation;
-    }
-
-    public void setApiOperation(String apiOperation) {
-        this.apiOperation = apiOperation;
-    }
-
-    public String getApiDetail() {
-        return apiDetail;
-    }
-
-    public void setApiDetail(String apiDetail) {
-        this.apiDetail = apiDetail;
-    }
 }

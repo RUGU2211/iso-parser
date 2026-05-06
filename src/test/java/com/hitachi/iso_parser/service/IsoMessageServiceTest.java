@@ -103,7 +103,7 @@ class IsoMessageServiceTest {
         assertEquals("00", response.getDe39());
         ArgumentCaptor<CardLimit> cardCaptor = ArgumentCaptor.forClass(CardLimit.class);
         verify(cardLimitRepository).save(cardCaptor.capture());
-        assertEquals("{\"unknown_limit\":\"12345\"}", cardCaptor.getValue().getLimitExtraData());
+        assertEquals("{\"goods_limit\":\"80000\",\"unknown_limit\":\"12345\"}", cardCaptor.getValue().getTotalDataReceived());
         assertEquals("SEG1", cardCaptor.getValue().getLimits());
         assertEquals(Integer.valueOf(13), cardCaptor.getValue().getIssuerNr());
 

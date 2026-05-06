@@ -14,7 +14,7 @@ It then:
 1. extracts all limit fields dynamically,
 2. resolves known fields from `limit_master`,
 3. generates TLV-like limit string dynamically,
-4. stores known/unknown fields in separate tables,
+4. stores all received fields in one JSON column (`total_data_received`) and known fields in TLV payload,
 5. writes audit logs for every request.
 
 ## 2) Current API Surface (As Implemented)
@@ -38,7 +38,7 @@ This allows one endpoint family while separating parse and CRUD behavior using c
 
 1. Request enters `IsoController`.
 2. Controller passes input string to `IsoMessageService.processIsoMessage(...)`.
-3. Service creates `IsoAudit` skeleton (`req_in`, `binary_hex`, `request_id`, timestamp).
+3. Service creates `IsoAudit` skeleton (`created_at`, `req_in` JSON).
 4. Service chooses parse strategy:
    - raw XML input -> parse directly
    - text containing XML block -> extract XML substring and parse
@@ -52,11 +52,10 @@ This allows one endpoint family while separating parse and CRUD behavior using c
    - splits known vs unknown fields
    - generates one segment per known field (dynamic lengths)
    - concatenates segments in priority order to final payload
-7. Service writes:
-   - summary record in `card_limits`
-   - known structured records in `card_limit_values`
-   - unknown records in `limit_extra_data`
-8. Service finalizes `iso_audit` with response, DE39, duration, and error (if any).
+7. Service writes one row in `pc_card_ext_lim_12_b`:
+   - `card_limits` TLV for known limits
+   - `total_data_received` JSON for all received fields (known + unknown)
+8. Service finalizes `iso_audit` with only `resp_out` JSON and `de39`.
 9. Returns JSON response:
    - success -> `de39=00`
    - failure -> `de39=01`
@@ -78,10 +77,7 @@ This allows one endpoint family while separating parse and CRUD behavior using c
   - unknown limits map.
 
 ## `DELETE /api/iso/limit/{pan}`
-- Deletes PAN data from:
-  - `card_limits`
-  - `card_limit_values`
-  - `limit_extra_data`
+- Delete behavior remains unchanged (soft delete in `pc_card_ext_lim_12_b` active rows).
 
 ## 5) Layer-by-Layer Implementation
 
@@ -101,7 +97,7 @@ This allows one endpoint family while separating parse and CRUD behavior using c
 - Validates HEX.
 - Tries unpack using `PostPackager`, then fallback `ISO87APackager`.
 - Extracts XML from `127.22` / `127.022` / `127`.
-- Extracts `DE11`.
+- Extracts XML payload for parser flow.
 
 ### `XmlLimitParser`
 - Cleans prefix/noise before XML.
@@ -115,7 +111,8 @@ This allows one endpoint family while separating parse and CRUD behavior using c
 ### `IsoMessageService`
 - Transactional orchestration.
 - Flexible input mode (HEX/XML/text-with-XML).
-- Persists summary, structured known/unknown, and audit records.
+- Persists one `pc_card_ext_lim_12_b` row per key and minimal audit record.
+- Merge rule: incoming known fields update only those keys; missing known keys are preserved from existing data.
 
 ### `CardLimitCrudService`
 - Implements PAN-only create/upsert/get/delete behavior.
@@ -141,43 +138,30 @@ Columns used by engine:
 - optional metadata: `limit_type`
 
 ## `card_limits`
-Summary record table.
+Primary storage table: `pc_card_ext_lim_12_b`.
 
 Stores:
-- PAN/Seq/ISO identifiers
-- final generated `limits` payload
-- update metadata
-
-## `card_limit_values`
-Structured known-limit store.
-
-Stores one row per known field:
-- `field_name`, `field_value`
-- profile/rule/priority used
-
-## `limit_extra_data`
-Unknown-field capture table.
-
-Stores fields not currently active in master:
-- `field_name`, `field_value`, source
+- PAN/Seq/issuer identifiers
+- final generated known-limit TLV payload in `card_limits`
+- all received incoming fields in JSON as `total_data_received`
+- update metadata + soft delete timestamp
 
 ## `iso_audit`
 Audit and observability.
 
 Stores:
-- request and response snapshots
-- parsed attributes
-- DE39, DE11
-- `request_id`, `processing_time_ms`, `error_message`
+- `created_at`
+- `req_in` JSON
+- `resp_out` JSON
+- `de39`
 
 ## 7) Known vs Unknown Resolution Rule
 
 - Known: `limit_name` exists in active `limit_master`.
-  - goes to `card_limit_values`
-  - included in final `limits` payload
+  - included in final `card_limits` TLV payload
 - Unknown: no active master row found.
-  - goes to `limit_extra_data`
-  - not included in final payload
+  - not included in TLV payload
+- Both known and unknown are stored in `total_data_received` JSON.
 
 This is dynamic and does not require code changes when master rows are added.
 
@@ -203,7 +187,7 @@ To support a new known field (example: `atm_limit`):
 2. Send field in incoming XML.
 3. Engine auto-recognizes it as known and includes in payload/table.
 
-If `is_active=false`, same field is stored as unknown in `limit_extra_data`.
+If `is_active=false`, same field is treated as unknown and still captured in `total_data_received`.
 
 ## 10) Input Format Notes (Current Reality)
 
@@ -218,9 +202,7 @@ If `is_active=false`, same field is stored as unknown in `limit_extra_data`.
 - Postman collection uses `/api/iso/limit/{pan}` route family.
 - Main tests are HEX parsing scenarios; CRUD section is optional admin/testing.
 - Recommended DB checks after tests:
-  - `card_limits`
-  - `card_limit_values`
-  - `limit_extra_data`
+  - `pc_card_ext_lim_12_b` (`card_limits`, `total_data_received`)
   - `iso_audit`
 
 ## 12) Current Status Summary

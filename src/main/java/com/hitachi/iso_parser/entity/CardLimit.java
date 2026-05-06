@@ -18,7 +18,7 @@ import jakarta.persistence.Table;
  * <b>Mapping from inbound XML / ISO flow:</b>
  * <ul>
  *   <li>Limits resolved via {@code limit_master} (known types) → concatenated TLV payload → column {@code card_limits}.</li>
- *   <li>Fields not in {@code limit_master} (unknown / “extra”) → JSON map {@code fieldName → value} → column {@code limit_extra_data}.</li>
+ *   <li>All received fields (known + unknown) → JSON map {@code fieldName → value} → column {@code total_data_received}.</li>
  *   <li>Audit: {@code created_date}, {@code last_updated_date}, {@code last_updated_user}; soft delete → {@code date_deleted}.</li>
  * </ul>
  */
@@ -45,8 +45,8 @@ public class CardLimit {
     private String limits = "";
 
     @ColumnDefault("'{}'")
-    @Column(name = "limit_extra_data", nullable = false, columnDefinition = "TEXT")
-    private String limitExtraData = "{}";
+    @Column(name = "total_data_received", nullable = false, columnDefinition = "TEXT")
+    private String totalDataReceived = "{}";
 
     @ColumnDefault("CURRENT_TIMESTAMP")
     @Column(name = "created_date", nullable = false)
@@ -115,12 +115,12 @@ public class CardLimit {
         this.limits = limits;
     }
 
-    public String getLimitExtraData() {
-        return limitExtraData;
+    public String getTotalDataReceived() {
+        return totalDataReceived;
     }
 
-    public void setLimitExtraData(String limitExtraData) {
-        this.limitExtraData = limitExtraData != null ? limitExtraData : "{}";
+    public void setTotalDataReceived(String totalDataReceived) {
+        this.totalDataReceived = totalDataReceived != null ? totalDataReceived : "{}";
     }
 
     public LocalDateTime getCreatedDate() {

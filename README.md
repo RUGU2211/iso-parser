@@ -92,7 +92,7 @@ This service simulates a **bank card limit update system** used in ATM switches,
 2. **Update or insert:** If found → update; if not → create new.
 3. **Save:** Sets iso_nr, pan, seq_nr, limits, last_upd_date, last_upd_user.
 4. **Persist:** `cardLimitRepository.save(entity)`.
-5. **Audit:** Every request/response stored in `iso_audit` (req_in, binary_hex, iso_fields_formatted, de11, pan, expiry_date, seq_nr, cash_limit, goods_limit, card_not_present_limit, resp_out, de39).
+5. **Audit:** Every request/response stored in `iso_audit` with only `created_at`, `req_in` (JSON), `resp_out` (JSON), and `de39`.
 
 ### 4. Input Message Structure
 
@@ -214,9 +214,9 @@ The API runs at **http://localhost:8081**
 
 ### Tables
 
-- **card_limits:** Parsed card limit data (pan, seq_nr, limits, last_upd_date, etc.)
+- **pc_card_ext_lim_12_b:** Parsed card limit data (pan, seq_nr, `card_limits` TLV string, `total_data_received` JSON, audit timestamps)
 - **limit_master:** Rule mapping (limit_pnr=profile_nr, limit_rule_nr=rule_nr)
-- **iso_audit:** Every request/response (req_in, binary_hex, iso_fields_formatted, de11, pan, expiry_date, seq_nr, cash_limit, goods_limit, card_not_present_limit, resp_out, de39)
+- **iso_audit:** Minimal audit trace (`created_at`, `req_in` JSON, `resp_out` JSON, `de39`)
 
 ### Limit Master Seed Data (limit_name, limit_pnr, limit_rule_nr only)
 
@@ -235,6 +235,14 @@ In card processing systems (Postilion / ISO8583), **PAN + SeqNr** is the unique 
 - **Unique constraint:** `UNIQUE(pan, seq_nr)` on `card_limits`
 - **Upsert:** If record exists for same PAN + SeqNr → **update**; otherwise → **insert**
 - **Lookup:** `findByPanAndSeqNr(pan, seqNr)` before save
+
+### Update behavior for known limits
+
+- `total_data_received` stores all incoming fields in JSON format (known + unknown).
+- On update, known limits are **merged** with existing stored data:
+  - if request sends only 2 known fields and DB already has 3, only those 2 are changed
+  - missing known fields are preserved (not deleted)
+- Final `card_limits` TLV string is rebuilt from the merged known data.
 
 ---
 

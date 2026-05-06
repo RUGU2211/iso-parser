@@ -176,12 +176,9 @@ public class CardLimitCrudService {
         dto.setSeqNr(seqNr);
         dto.setLimits(request.getLimits());
 
+        Map<String, String> mergedData = buildMergedData(existing, request.getLimits());
+        dto.setLimits(mergedData);
         LimitEngineResult engineResult = limitCalculationService.buildLimitResult(dto);
-
-        Map<String, String> extra = new LinkedHashMap<>();
-        for (ResolvedLimitSegment segment : engineResult.getUnknownSegments()) {
-            extra.put(segment.getFieldName(), segment.getValue());
-        }
 
         CardLimit entity = existing != null ? existing : new CardLimit();
         if (existing == null) {
@@ -191,7 +188,7 @@ public class CardLimitCrudService {
         entity.setPan(pan);
         entity.setSeqNr(seqNr);
         entity.setLimits(engineResult.getLimitPayload());
-        entity.setLimitExtraData(extraLimitsJsonMapper.toJson(extra));
+        entity.setTotalDataReceived(extraLimitsJsonMapper.toJson(mergedData));
         entity.setLastUpdatedDate(now);
         entity.setLastUpdatedUser(trimUser(normalizeOrDefault(request.getLastUpdUser(), isoConfig.getLastUpdUser())));
         entity.setDateDeleted(null);
@@ -215,9 +212,31 @@ public class CardLimitCrudService {
         out.setLimitsString(row.getLimits());
         out.setLastUpdUser(row.getLastUpdatedUser());
         out.setLastUpdDate(row.getLastUpdatedDate());
-        out.setKnownLimits(extractKnownLimits(row.getLimits()));
-        out.setUnknownLimits(extraLimitsJsonMapper.unmodifiableView(extraLimitsJsonMapper.fromJson(row.getLimitExtraData())));
+        Map<String, String> knownLimits = extractKnownLimits(row.getLimits());
+        Map<String, String> totalData = new LinkedHashMap<>(extraLimitsJsonMapper.fromJson(row.getTotalDataReceived()));
+        Map<String, String> unknownLimits = new LinkedHashMap<>(totalData);
+        for (String knownKey : knownLimits.keySet()) {
+            unknownLimits.remove(knownKey);
+        }
+        out.setKnownLimits(knownLimits);
+        out.setUnknownLimits(extraLimitsJsonMapper.unmodifiableView(unknownLimits));
         return out;
+    }
+
+    private Map<String, String> buildMergedData(CardLimit existing, Map<String, String> incoming) {
+        Map<String, String> merged = new LinkedHashMap<>();
+        if (existing != null) {
+            merged.putAll(extraLimitsJsonMapper.fromJson(existing.getTotalDataReceived()));
+            merged.putAll(extractKnownLimits(existing.getLimits()));
+        }
+        if (incoming != null) {
+            incoming.forEach((k, v) -> {
+                if (k != null && !k.isBlank()) {
+                    merged.put(k.trim(), v != null ? v.trim() : "");
+                }
+            });
+        }
+        return merged;
     }
 
     private Map<String, String> extractKnownLimits(String payload) {

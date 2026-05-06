@@ -4,7 +4,6 @@ import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
@@ -26,7 +25,6 @@ import com.hitachi.iso_parser.repository.IsoAuditRepository;
 @Service
 public class CrudAuditService {
 
-    private static final int MAX_DETAIL = 15500;
     private static final int MAX_REQ_IN = 7900;
 
     private final IsoAuditRepository isoAuditRepository;
@@ -96,21 +94,25 @@ public class CrudAuditService {
             String errorMessage, Map<String, Object> detail) {
         IsoAudit audit = new IsoAudit();
         audit.setCreatedAt(LocalDateTime.now());
-        audit.setRequestId(UUID.randomUUID().toString());
-        audit.setApiOperation(apiOperation);
-        audit.setPan(trunc(pan, 50));
-        audit.setSeqNr(trunc(seqNr, 10));
-        audit.setProcessingTimeMs(durationMs);
         audit.setDe39(success ? isoConfig.getDe39Success() : isoConfig.getDe39Failed());
-        audit.setErrorMessage(trunc(errorMessage, 2000));
-        audit.setReqIn(trunc("RESOURCE=LIMIT|" + apiOperation + "|pan=" + (pan != null ? pan : ""), MAX_REQ_IN));
-        audit.setRespOut(success ? "OK" : "FAIL");
-        try {
-            audit.setApiDetail(trunc(objectMapper.writeValueAsString(detail), MAX_DETAIL));
-        } catch (JsonProcessingException e) {
-            audit.setApiDetail("{\"error\":\"json_serialize_failed\"}");
+        Map<String, Object> req = new LinkedHashMap<>();
+        req.put("operation", apiOperation);
+        req.put("durationMs", durationMs);
+        req.put("success", success);
+        req.put("request", detail);
+        audit.setReqIn(trunc(toJson(req), MAX_REQ_IN));
+        Map<String, Object> resp = new LinkedHashMap<>();
+        resp.put("status", success ? "success" : "failed");
+        resp.put("de39", audit.getDe39());
+        if (errorMessage != null && !errorMessage.isBlank()) {
+            resp.put("error", trunc(errorMessage, 2000));
         }
-        isoAuditRepository.save(audit);
+        audit.setRespOut(toJson(resp));
+        try {
+            isoAuditRepository.save(audit);
+        } catch (RuntimeException ignored) {
+            // keep API flow unaffected if audit save fails
+        }
     }
 
     private Map<String, Object> summarizeRequest(LimitUpsertRequest r) {
@@ -147,5 +149,13 @@ public class CrudAuditService {
             return s;
         }
         return s.substring(0, max) + "…";
+    }
+
+    private String toJson(Map<String, Object> payload) {
+        try {
+            return objectMapper.writeValueAsString(payload);
+        } catch (JsonProcessingException e) {
+            return "{}";
+        }
     }
 }
